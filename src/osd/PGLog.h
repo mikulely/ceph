@@ -662,6 +662,7 @@ public:
 
   static void append_log_entries_update_missing(
     const hobject_t &last_backfill,
+    bool last_backfill_bitwise,
     const list<pg_log_entry_t> &entries,
     IndexedLog *log,
     pg_missing_t &missing,
@@ -669,10 +670,12 @@ public:
     const DoutPrefixProvider *dpp);
   void append_new_log_entries(
     const hobject_t &last_backfill,
+    bool last_backfill_bitwise,
     const list<pg_log_entry_t> &entries,
     LogEntryHandler *rollbacker) {
     append_log_entries_update_missing(
       last_backfill,
+      last_backfill_bitwise,
       entries,
       &log,
       missing,
