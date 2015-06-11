@@ -1696,9 +1696,23 @@ private:
 
     struct Pred {
       PG *pg;
-      Pred(PG *pg) : pg(pg) {}
-      bool operator()(const pair<PGRef, PGQueueable> &op) {
-	return op.first == pg;
+      list<OpRequestRef> *out_ops;
+      Pred(PG *pg, list<OpRequestRef> *out_ops = 0)
+	: pg(pg), out_ops(out_ops) {}
+      void accumulate(PGQueueable &op) {
+	if (out_ops) {
+	  boost::optional<OpRequestRef> mop = op.maybe_get_op();
+	  if (mop)
+	    out_ops->push_back(*mop);
+	}
+      }
+      bool operator()(pair<PGRef, PGQueueable> &op) {
+	if (op.first == pg) {
+	  accumulate(op.second);
+	  return true;
+	} else {
+	  return false;
+	}
       }
     };
 
@@ -1709,8 +1723,21 @@ private:
       sdata = shard_list[shard_index];
       assert(sdata != NULL);
       sdata->sdata_op_ordering_lock.Lock();
-      sdata->pqueue.remove_by_filter(Pred(pg));
-      sdata->pg_for_processing.erase(pg);
+
+      Pred f(pg);
+      map<PG *, list<PGQueueable> >::iterator iter =
+	sdata->pg_for_processing.find(pg);
+      if (iter != sdata->pg_for_processing.end()) {
+	for (list<PGQueueable>::iterator i = iter->second.begin();
+	     i != iter->second.end();
+	     ++i) {
+	  f.accumulate(*i);
+	}
+	sdata->pg_for_processing.erase(iter);
+      }
+
+      sdata->pqueue.remove_by_filter(f);
+
       sdata->sdata_op_ordering_lock.Unlock();
     }
 
@@ -1721,27 +1748,23 @@ private:
       sdata = shard_list[shard_index];
       assert(sdata != NULL);
       assert(dequeued);
-      list<pair<PGRef, PGQueueable> > _dequeued;
       sdata->sdata_op_ordering_lock.Lock();
-      sdata->pqueue.remove_by_filter(Pred(pg), &_dequeued);
-      for (list<pair<PGRef, PGQueueable> >::iterator i = _dequeued.begin();
-	   i != _dequeued.end(); ++i) {
-	boost::optional<OpRequestRef> mop = i->second.maybe_get_op();
-	if (mop)
-	  dequeued->push_back(*mop);
-      }
+
+      Pred f(pg, dequeued);
+
       map<PG *, list<PGQueueable> >::iterator iter =
 	sdata->pg_for_processing.find(pg);
       if (iter != sdata->pg_for_processing.end()) {
-	for (list<PGQueueable>::reverse_iterator i = iter->second.rbegin();
-	     i != iter->second.rend();
+	for (list<PGQueueable>::iterator i = iter->second.begin();
+	     i != iter->second.end();
 	     ++i) {
-	  boost::optional<OpRequestRef> mop = i->maybe_get_op();
-	  if (mop)
-	    dequeued->push_front(*mop);
+	  f.accumulate(*i);
 	}
 	sdata->pg_for_processing.erase(iter);
       }
+
+      sdata->pqueue.remove_by_filter(f);
+
       sdata->sdata_op_ordering_lock.Unlock();
     }
  
