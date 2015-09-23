@@ -754,6 +754,7 @@ void ReplicatedBackend::be_deep_scrub(
   bufferlist bl, hdrbl;
   int r;
   __u64 pos = 0;
+  bool omap_exist = false;
 
   uint32_t fadvise_flags = CEPH_OSD_OP_FLAG_FADVISE_SEQUENTIAL | CEPH_OSD_OP_FLAG_FADVISE_DONTNEED;
 
@@ -781,6 +782,25 @@ void ReplicatedBackend::be_deep_scrub(
   }
   o.digest = h.digest();
   o.digest_present = true;
+
+  map<string, bufferptr>::iterator k = o.attrs.find(OI_ATTR);
+  if (k != o.attrs.end()) {
+    bufferlist bl;
+    bl.push_back(k->second);
+    object_info_t oi;
+    try {
+      bufferlist::iterator bliter = bl.begin();
+      ::decode(oi, bliter);
+      if (oi.is_omap())
+	omap_exist = true;
+    } catch (...) {
+      dout(10) << __func__ << " " << poid << " corrupt oi attr" << dendl;
+    }
+  } else
+    dout(10) << __func__ << " " << poid << " oi attr not found" << dendl;
+
+  if (!omap_exist)
+    return;
 
   bl.clear();
   r = store->omap_get_header(
