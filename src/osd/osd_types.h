@@ -3697,12 +3697,13 @@ struct ScrubMap {
     __u32 omap_digest;         ///< omap crc32c
     bool omap_digest_present;
     bool read_error;
+    bool stat_error;
 
     object() :
       // Init invalid size so it won't match if we get a stat EIO error
       size(-1), negative(false), digest(0), digest_present(false),
       nlinks(0), omap_digest(0), omap_digest_present(false),
-      read_error(false) {}
+      read_error(false), stat_error(false) {}
 
     void encode(bufferlist& bl) const;
     void decode(bufferlist::iterator& bl);
