@@ -36,7 +36,7 @@ pybind-install-exec:
 	cd $(srcdir)/pybind; $(PY_DISTUTILS) install \
 	$$options $$root \
 	--single-version-externally-managed \
-	--record $(DESTDIR)$(pythondir)/rbd_install_files.txt \
+	--record $(DESTDIR)$(pyexecdir)/rbd_install_files.txt \
 	--verbose
 
 LOCAL_ALL += pybind-all
