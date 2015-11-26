@@ -1118,7 +1118,7 @@ ln -sf %{_libdir}/librbd.so.1 /usr/lib64/qemu/librbd.so.1
 #################################################################################
 %files -n python-rbd
 %defattr(-,root,root,-)
-%{python_sitelib}/rbd.py*
+%{python_sitearch}/rbd*
 
 #################################################################################
 %files -n libcephfs1
