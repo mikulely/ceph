@@ -1,3 +1,5 @@
+EXTRA_DIST += $(srcdir)/pybind/setup.py $(srcdir)/pybind/rbd.pyx
+
 if ENABLE_CLIENT
 if WITH_RADOS
 if WITH_RBD
