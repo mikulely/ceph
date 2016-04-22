@@ -104,7 +104,7 @@ public:
    * @param type type of store. This is a string from the configuration file.
    * @param data path (or other descriptor) for data
    * @param journal path (or other descriptor) for journal (optional)
-   * @param flags which filestores should check if applicable
+   * @param flags which objectstores should check if applicable
    */
   static ObjectStore *create(CephContext *cct,
 			     const string& type,
