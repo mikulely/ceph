@@ -37,7 +37,7 @@ Phases
 A connection has two distinct phases:
 
 #. banner
-#. frame exchange for one or more strams
+#. frame exchange for one or more streams
 
 A stream has three distinct phases:
 
