@@ -207,6 +207,7 @@ req_state::req_state(CephContext* _cct, RGWEnv* e, RGWUserInfo* u)
   os_auth_token = NULL;
   time = ceph_clock_now(cct);
   perm_mask = 0;
+  subuser = "";
   bucket_instance_shard_id = -1;
   content_length = 0;
   bucket_exists = false;

@@ -3831,6 +3831,7 @@ int RGW_Auth_S3::authorize_v4(RGWRados *store, struct req_state *s)
     }
     RGWSubUser& subuser = uiter->second;
     s->perm_mask = subuser.perm_mask;
+    s->subuser = subuser.name;
   } else {
     s->perm_mask = RGW_PERM_FULL_CONTROL;
   }
@@ -4042,6 +4043,7 @@ int RGW_Auth_S3::authorize_v2(RGWRados *store, struct req_state *s)
       }
       RGWSubUser& subuser = uiter->second;
       s->perm_mask = subuser.perm_mask;
+      s->subuser = subuser.name;
     } else
       s->perm_mask = RGW_PERM_FULL_CONTROL;
 

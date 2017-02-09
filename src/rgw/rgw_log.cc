@@ -127,14 +127,13 @@ public:
     round_timestamp = ts.round_to_hour();
   }
 
-  void insert_user(utime_t& timestamp, const rgw_user& user, rgw_usage_log_entry& entry) {
+  void insert_user(utime_t& timestamp, const string& user, rgw_usage_log_entry& entry) {
     lock.Lock();
     if (timestamp.sec() > round_timestamp + 3600)
       recalc_round_timestamp(timestamp);
     entry.epoch = round_timestamp.sec();
     bool account;
-    string u = user.to_str();
-    rgw_user_bucket ub(u, entry.bucket);
+    rgw_user_bucket ub(user, entry.bucket);
     real_time rt = round_timestamp.to_real_time();
     usage_map[ub].insert(rt, entry, &account);
     if (account)
@@ -149,9 +148,9 @@ public:
 
   void insert(utime_t& timestamp, rgw_usage_log_entry& entry) {
     if (entry.payer.empty()) {
-      insert_user(timestamp, entry.owner, entry);
+      insert_user(timestamp, entry.owner.to_str(), entry);
     } else {
-      insert_user(timestamp, entry.payer, entry);
+      insert_user(timestamp, entry.payer.to_str(), entry);
     }
   }
 
@@ -225,6 +224,16 @@ static void log_usage(struct req_state *s, const string& op_name)
   utime_t ts = ceph_clock_now(s->cct);
 
   usage_logger->insert(ts, entry);
+
+  if (s->cct->_conf->rgw_enable_usage_log && s->cct->_conf->rgw_enable_usage_log_at_subuser_level &&
+      !s->subuser.empty())
+  {
+   string sname = u + ":" + s->subuser;
+   ldout(s->cct, 5) << "log subuser enty: " << sname << dendl;
+   rgw_usage_log_entry sentry(sname, p, bucket_name);
+   sentry.add(op_name, data);
+   usage_logger->insert(ts, sentry);
+  }
 }
 
 void rgw_format_ops_log_entry(struct rgw_log_entry& entry, Formatter *formatter)

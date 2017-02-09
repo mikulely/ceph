@@ -1357,6 +1357,7 @@ OPTION(rgw_ops_log_data_backlog, OPT_INT, 5 << 20) // max data backlog for ops l
 OPTION(rgw_fcgi_socket_backlog, OPT_INT, 1024) // socket  backlog for fcgi
 OPTION(rgw_usage_log_flush_threshold, OPT_INT, 1024) // threshold to flush pending log data
 OPTION(rgw_usage_log_tick_interval, OPT_INT, 30) // flush pending log data every X seconds
+OPTION(rgw_enable_usage_log_at_subuser_level, OPT_BOOL, true) 
 OPTION(rgw_intent_log_object_name, OPT_STR, "%Y-%m-%d-%i-%n")  // man date to see codes (a subset are supported)
 OPTION(rgw_intent_log_object_name_utc, OPT_BOOL, false)
 OPTION(rgw_init_timeout, OPT_INT, 300) // time in seconds
