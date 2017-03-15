@@ -1750,6 +1750,17 @@ const string& RGWZoneParams::get_compression_type(const string& placement_rule) 
   return !type.empty() ? type : NONE;
 }
 
+const map<string, string>& RGWZoneParams::get_compression_config(const string& placement_rule) const
+{
+  static const map<string, string> NONE;
+  auto p = placement_pools.find(placement_rule);
+  if (p == placement_pools.end()) {
+    return NONE;
+  }
+  const auto& config = p->second.compression_config;
+  return !config.empty() ? config : NONE;
+}
+
 void RGWPeriodMap::encode(bufferlist& bl) const {
   ENCODE_START(2, 1, bl);
   ::encode(id, bl);
@@ -7136,8 +7147,11 @@ int RGWRados::fetch_remote_obj(RGWObjectCtx& obj_ctx,
 
   const auto& compression_type = zone_params.get_compression_type(
       dest_bucket_info.placement_rule);
+
   if (compression_type != "none") {
-    plugin = Compressor::create(cct, compression_type);
+    const auto& compression_config = zone_params.get_compression_config(
+				     dest_bucket_info.placement_rule);
+    plugin = Compressor::create(cct, compression_type, compression_config);
     if (!plugin) {
       ldout(cct, 1) << "Cannot load plugin for compression type "
           << compression_type << dendl;

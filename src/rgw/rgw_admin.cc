@@ -2475,6 +2475,8 @@ int main(int argc, const char **argv)
   bool index_type_specified = false;
 
   boost::optional<std::string> compression_type;
+  map<std::string, std::string> compression_config_add;
+  map<std::string, std::string> compression_config_rm;
 
   for (std::vector<const char*>::iterator i = args.begin(); i != args.end(); ) {
     if (ceph_argparse_double_dash(args, i)) {
@@ -2788,6 +2790,10 @@ int main(int argc, const char **argv)
       index_type_specified = true;
     } else if (ceph_argparse_witharg(args, i, &val, "--compression", (char*)NULL)) {
       compression_type = val;
+    } else if (ceph_argparse_witharg(args, i, &val, "--compression-config", (char*)NULL)) {
+      parse_tier_config_param(val, compression_config_add);
+    } else if (ceph_argparse_witharg(args, i, &val, "--compression-config-rm", (char*)NULL)) {
+      parse_tier_config_param(val, compression_config_rm);
     } else if (ceph_argparse_witharg(args, i, &val, "--role-name", (char*)NULL)) {
       role_name = val;
     } else if (ceph_argparse_witharg(args, i, &val, "--path", (char*)NULL)) {
@@ -4230,7 +4236,16 @@ int main(int argc, const char **argv)
           }
           if (compression_type) {
             info.compression_type = *compression_type;
-          }
+	    if (compression_config_add) {
+	      info.compression_config = compression_config_add;
+	    }
+          } else {
+	    if (compression_config_add) {
+              cerr << "ERROR: need to specify --compression-config "
+	           << "together with --compression-type" << std::endl;
+              return EINVAL;
+	    }
+	  }
         } else if (opt_cmd == OPT_ZONE_PLACEMENT_MODIFY) {
           auto p = zone.placement_pools.find(placement_id);
           if (p == zone.placement_pools.end()) {
@@ -4254,6 +4269,15 @@ int main(int argc, const char **argv)
           if (compression_type) {
             info.compression_type = *compression_type;
           }
+
+	  for (auto add : compression_config_add) {
+	    info.compression_config[add.first] = add.second;
+          }
+
+          for (auto rm : compression_config_rm) {
+	    info.compression_config.erase(rm.first);
+          }
+
         } else if (opt_cmd == OPT_ZONE_PLACEMENT_RM) {
           zone.placement_pools.erase(placement_id);
         }

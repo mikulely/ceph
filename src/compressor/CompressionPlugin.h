@@ -36,7 +36,11 @@ namespace ceph {
     ~CompressionPlugin() override {}
 
     virtual int factory(CompressorRef *cs,
-			                  std::ostream *ss) = 0;
+			std::ostream *ss) = 0;
+
+    virtual int factory(CompressorRef *cs,
+			std::ostream *ss
+			map<string, string> &config) = 0;
 
     virtual const char* name() {return "CompressionPlugin";}
   };

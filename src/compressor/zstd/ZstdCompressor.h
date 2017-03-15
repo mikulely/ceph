@@ -20,27 +20,31 @@
 #include "include/encoding.h"
 #include "compressor/Compressor.h"
 
-#define COMPRESSION_LEVEL 5
+#define DEFAULT_COMPRESSION_LEVEL 5
 
 class ZstdCompressor : public Compressor {
  public:
   ZstdCompressor() : Compressor(COMP_ALG_ZSTD, "zstd") {}
+  ZstdCompressor(config) : Compressor(COMP_ALG_ZSTD, "zstd", config) {}
 
   int compress(const bufferlist &src, bufferlist &dst) override {
     bufferptr outptr = buffer::create_page_aligned(
       ZSTD_compressBound(src.length()));
-    ZSTD_outBuffer_s outbuf;
+    ZSTD_outBuffer outbuf;
     outbuf.dst = outptr.c_str();
     outbuf.size = outptr.length();
     outbuf.pos = 0;
-
     ZSTD_CStream *s = ZSTD_createCStream();
-    ZSTD_initCStream(s, COMPRESSION_LEVEL);
+    int clevel = atoi(config["compression_level"].c_str());
+    if (clevel <= ZSTD_DEFAULT_CLEVEL || clevel > ZSTD_MAX_CLEVEL) { // ZSTD_DEFAULT_CLEVEL is 0
+	clevel = DEFAULT_COMPRESSION_LEVEL;
+    }
+    ZSTD_initCStream(s, clevel);
     auto p = src.begin();
     size_t left = src.length();
     while (left) {
       assert(!p.end());
-      struct ZSTD_inBuffer_s inbuf;
+      ZSTD_inBuffer inbuf;
       inbuf.pos = 0;
       inbuf.size = p.get_ptr_and_advance(left, (const char**)&inbuf.src);
       ZSTD_compressStream(s, &outbuf, &inbuf);

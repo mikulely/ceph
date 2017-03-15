@@ -61,7 +61,9 @@ boost::optional<Compressor::CompressionMode> Compressor::get_comp_mode_type(cons
   return boost::optional<CompressionMode>();
 }
 
-CompressorRef Compressor::create(CephContext *cct, const std::string &type)
+CompressorRef Compressor::create(CephContext *cct,
+				 const std::string &type,
+				 const map<string, string> &config)
 {
   // support "random" for teuthology testing
   if (type == "random") {
@@ -89,10 +91,17 @@ CompressorRef Compressor::create(CephContext *cct, const std::string &type)
     lderr(cct) << __func__ << " cannot load compressor of type " << type << dendl;
     return NULL;
   }
-  int err = factory->factory(&cs_impl, &ss);
+  int err = factory->factory(&cs_impl, &ss, config);
   if (err)
     lderr(cct) << __func__ << " factory return error " << err << dendl;
   return cs_impl;
+}
+
+CompressorRef Compressor::create(CephContext *cct,
+				 const std::string &type)
+{
+  static const map<string, string> none_config;
+  return create(cct, type, none_config);
 }
 
 CompressorRef Compressor::create(CephContext *cct, int alg)

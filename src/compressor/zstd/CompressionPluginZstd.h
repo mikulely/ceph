@@ -29,10 +29,18 @@ public:
   {}
 
   int factory(CompressorRef *cs,
-                      std::ostream *ss) override
+	      std::ostream *ss) override
+  {
+    static const map<string, string> none_config;
+    return factory(cs, ss, none_config);
+  }
+
+  int factory(CompressorRef *cs,
+	      std::ostream *ss,
+	      map<std::string, std::string> &config) override
   {
     if (compressor == 0) {
-      ZstdCompressor *interface = new ZstdCompressor();
+      ZstdCompressor *interface = new ZstdCompressor(config);
       compressor = CompressorRef(interface);
     }
     *cs = compressor;

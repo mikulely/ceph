@@ -48,6 +48,9 @@ public:
 
   Compressor(CompressionAlgorithm a, const char* t) : alg(a), type(t) {
   }
+  Compressor(CompressionAlgorithm a, const char* t, 
+             map<string, string> &config) : alg(a), type(t), config(config) {
+  }
   virtual ~Compressor() {}
   const std::string& get_type_name() const {
     return type;
@@ -62,8 +65,12 @@ public:
   virtual int decompress(bufferlist::iterator &p, size_t compressed_len, bufferlist &out) = 0;
 
   static CompressorRef create(CephContext *cct, const std::string &type);
+  static CompressorRef create(CephContext *cct,
+			      const std::string &type,
+			      const map<string, string> &config);
   static CompressorRef create(CephContext *cct, int alg);
 
+  map<std::string, std::string> config;
 protected:
   CompressionAlgorithm alg;
   std::string type;
