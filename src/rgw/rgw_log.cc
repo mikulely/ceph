@@ -226,6 +226,15 @@ static void log_usage(struct req_state *s, const string& op_name)
   utime_t ts = ceph_clock_now();
 
   usage_logger->insert(ts, entry);
+
+  if (s->cct->_conf->rgw_enable_usage_log_at_subuser_level &&
+      (s->auth.identity.get_subuser_name() != rgw::auth::LocalApplier::NO_SUBUSER)) {
+    string sname = u + ":" + s->auth.identity.get_subuser_name();
+    ldout(s->cct, 5) << "log subuser entry: " << sname << dendl;
+    rgw_usage_log_entry sentry(sname, p, bucket_name);
+    sentry.add(op_name, data);
+    usage_logger->insert(ts, sentry);
+  }
 }
 
 void rgw_format_ops_log_entry(struct rgw_log_entry& entry, Formatter *formatter)
