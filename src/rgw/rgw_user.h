@@ -163,6 +163,7 @@ struct RGWUserAdminOpState {
   __u8 suspended;
   __u8 admin;
   __u8 system;
+  __u8 bl_deliver;
   __u8 exclusive;
   __u8 fetch_stats;
   std::string caps;
@@ -203,6 +204,7 @@ struct RGWUserAdminOpState {
   bool suspension_op;
   bool admin_specified;
   bool system_specified;
+  bool bl_deliver_specified;
   bool key_op;
   bool temp_url_key_specified;
   bool found_by_uid; 
@@ -329,6 +331,11 @@ struct RGWUserAdminOpState {
   void set_system(__u8 is_system) {
     system = is_system;
     system_specified = true;
+  }
+
+  void set_bl_deliver(__u8 is_deliver) {
+    bl_deliver = is_deliver;
+    bl_deliver_specified = true;
   }
 
   void set_exclusive(__u8 is_exclusive) {
@@ -511,6 +518,7 @@ struct RGWUserAdminOpState {
     op_mask_specified = false;
     suspension_op = false;
     system_specified = false;
+    bl_deliver_specified = false; 
     key_op = false;
     populated = false;
     initialized = false;

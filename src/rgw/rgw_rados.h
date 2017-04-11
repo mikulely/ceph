@@ -1144,6 +1144,7 @@ struct RGWZoneParams : RGWSystemMetaObj {
   rgw_pool roles_pool;
 
   RGWAccessKey system_key;
+  RGWAccessKey bl_deliver_key; // bucket logging deliver user
 
   map<string, RGWZonePlacementInfo> placement_pools;
 
@@ -1195,6 +1196,7 @@ struct RGWZoneParams : RGWSystemMetaObj {
     ::encode(tier_config, bl);
     ::encode(roles_pool, bl);
     ::encode(bl_pool, bl);
+    ::encode(bl_deliver_key, bl);
     ENCODE_FINISH(bl);
   }
 
@@ -1243,6 +1245,8 @@ struct RGWZoneParams : RGWSystemMetaObj {
     } else {
       bl_pool.init(name + ".rgw.bl");
     }
+    if (struct_v >= 10)
+      ::decode(bl_deliver_key, bl);
     DECODE_FINISH(bl);
   }
   void dump(Formatter *f) const;

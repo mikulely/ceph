@@ -208,6 +208,7 @@ void _usage()
   cout << "   --max_buckets             max number of buckets for a user\n";
   cout << "   --admin                   set the admin flag on the user\n";
   cout << "   --system                  set the system flag on the user\n";
+  cout << "   --bl_deliver              set the bucket logging deliver flag on the user\n";
   cout << "   --bucket=<bucket>\n";
   cout << "   --pool=<pool>\n";
   cout << "   --object=<object>\n";
@@ -2422,6 +2423,8 @@ int main(int argc, const char **argv)
   bool admin_specified = false;
   int system = false;
   bool system_specified = false;
+  int bl_deliver = false;
+  bool bl_deliver_specified = false;
   int shard_id = -1;
   bool specified_shard_id = false;
   string daemon_id;
@@ -2551,6 +2554,8 @@ int main(int argc, const char **argv)
       admin_specified = true;
     } else if (ceph_argparse_binary_flag(args, i, &system, NULL, "--system", (char*)NULL)) {
       system_specified = true;
+    } else if (ceph_argparse_binary_flag(args, i, &bl_deliver, NULL, "--bl_deliver", (char*)NULL)) {
+      bl_deliver_specified = true;
     } else if (ceph_argparse_binary_flag(args, i, &verbose, NULL, "--verbose", (char*)NULL)) {
       // do nothing
     } else if (ceph_argparse_binary_flag(args, i, &staging, NULL, "--staging", (char*)NULL)) {
@@ -3860,9 +3865,15 @@ int main(int argc, const char **argv)
 	  return -ret;
 	}
 
-        zone.system_key.id = access_key;
-        zone.system_key.key = secret_key;
 	zone.realm_id = realm_id;
+
+        if (bl_deliver_specified) {
+          zone.bl_deliver_key.id = access_key;
+          zone.bl_deliver_key.key = secret_key;
+        } else {
+          zone.system_key.id = access_key;
+          zone.system_key.key = secret_key;
+        }
 
 	ret = zone.create();
 	if (ret < 0) {
@@ -4098,13 +4109,19 @@ int main(int argc, const char **argv)
 
         bool need_zone_update = false;
         if (!access_key.empty()) {
-          zone.system_key.id = access_key;
           need_zone_update = true;
+          if (bl_deliver_specified)
+            zone.bl_deliver_key.id = access_key;
+          else
+            zone.system_key.id = access_key;
         }
 
         if (!secret_key.empty()) {
-          zone.system_key.key = secret_key;
           need_zone_update = true;
+          if (bl_deliver_specified)
+            zone.bl_deliver_key.key = secret_key;
+          else
+            zone.system_key.key = secret_key;
         }
 
         if (!realm_id.empty()) {
@@ -4342,6 +4359,9 @@ int main(int argc, const char **argv)
 
   if (system_specified)
     user_op.set_system(system);
+
+  if (bl_deliver_specified)
+    user_op.set_bl_deliver(bl_deliver);
 
   if (set_perm)
     user_op.set_perm(perm_mask);
