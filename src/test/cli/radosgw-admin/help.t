@@ -158,6 +158,7 @@
      --max_buckets             max number of buckets for a user
      --admin                   set the admin flag on the user
      --system                  set the system flag on the user
+     --bl_deliver              set the bucket logging deliver flag on the user
      --bucket=<bucket>
      --pool=<pool>
      --object=<object>
