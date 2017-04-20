@@ -1427,16 +1427,38 @@ OPTION(rgw_override_bucket_index_max_shards, OPT_U32, 0)
 OPTION(rgw_bucket_index_max_aio, OPT_U32, 8)
 
 /**
- * whether or not the quota/gc threads should be started
+ * whether or not the quota threads should be started
  */
 OPTION(rgw_enable_quota_threads, OPT_BOOL, true)
+
+/**
+ * whether or not the gc threads should be started
+ */
 OPTION(rgw_enable_gc_threads, OPT_BOOL, true)
+
+/**
+ * whether or not the lc threads should be started
+ */
 OPTION(rgw_enable_lc_threads, OPT_BOOL, true)
+
+/**
+ * whether or not the bl threads should be started
+ */
 OPTION(rgw_enable_bl_threads, OPT_BOOL, true)
+
 OPTION(rgw_bl_max_objs, OPT_INT, 32)
+
 OPTION(rgw_bl_lock_max_time, OPT_INT, 60)  // total run time for a single bl processor work
 OPTION(rgw_bl_work_time, OPT_STR, "00:00-06:00") //job process bl at 00:00-06:00s
-OPTION(rgw_bl_url, OPT_STR, "http://localhost:7480") // modify according to the rgw_frontend config
+/**
+ * bl thread need to upload opslog by sending http put requests to itself
+
+ * We need to support FCGI frontend which we can't find listening port
+ * for http reqeust in ceph.conf, moreover certain rgw_frontend alos
+ * support listening on serverl ports. so we need to modify the port
+ * according to the rgw_frontends config option.
+ */
+OPTION(rgw_bl_url, OPT_STR, "http://localhost:7480")
 
 OPTION(rgw_data, OPT_STR, "/var/lib/ceph/radosgw/$cluster-$id")
 OPTION(rgw_enable_apis, OPT_STR, "s3, s3website, swift, swift_auth, admin")
