@@ -1763,6 +1763,11 @@ struct req_state {
    * Being system user means we also have the admin status. */
   bool system_request;
 
+  /* Is the request made by an user markder as a bucket logging
+   * deliver user? Being bl_deliver user means the user are allowed
+   * to put object only. */
+  bool bl_deliver_request;
+
   /* aws4 auth support */
   bool aws4_auth_needs_complete;
   bool aws4_auth_streaming_mode;
