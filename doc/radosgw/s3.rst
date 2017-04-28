@@ -40,6 +40,8 @@ The following table describes the support status for current Amazon S3 functiona
 +---------------------------------+-----------------+----------------------------------------+
 | **Bucket Lifecycle**            | Supported       | Removing expired files is supported    |
 +---------------------------------+-----------------+----------------------------------------+
+| **Bucket Logging**              | Supported       | Log Delivery Group ACL isn't supported |
++---------------------------------+-----------------+----------------------------------------+
 | **Policy (Buckets, Objects)**   | Not Supported   | ACLs are supported                     |
 +---------------------------------+-----------------+----------------------------------------+
 | **Bucket Website**              | Supported       |                                        |
