@@ -766,6 +766,7 @@ struct rgw_cls_usage_log_trim_op {
   uint64_t end_epoch;
   string user;
   string subuser;
+  bool subuser_specified;
 
   void encode(bufferlist& bl) const {
     ENCODE_START(3, 2, bl);
@@ -773,6 +774,7 @@ struct rgw_cls_usage_log_trim_op {
     ::encode(end_epoch, bl);
     ::encode(user, bl);
     ::encode(subuser, bl);
+    ::encode(subuser_specified, bl);
     ENCODE_FINISH(bl);
   }
 
@@ -783,6 +785,7 @@ struct rgw_cls_usage_log_trim_op {
     ::decode(user, bl);
     if (struct_v >= 3) {
       ::decode(subuser, bl);
+      ::decode(subuser_specified, bl);
      }
     DECODE_FINISH(bl);
   }
