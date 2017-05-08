@@ -49,6 +49,7 @@ you may write data with one API and retrieve it with the other.
    OpenStack Barbican Integration <barbican>
    Multi-tenancy <multitenancy>
    Compression <compression>
+   Bucket Logging <bucket_logging>
    Server-Side Encryption <encryption>
    Bucket Policy <bucketpolicy>
    Data Layout in RADOS <layout>
