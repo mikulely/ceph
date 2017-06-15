@@ -434,8 +434,8 @@ void RGWZoneGroup::post_process_params()
       continue;
     }
 
-    for (map<string, RGWZonePlacementInfo>::iterator iter = zone_params.placement_pools.begin(); 
-         iter != zone_params.placement_pools.end(); ++iter) {
+    for (map<string, RGWZonePlacementInfo>::iterator iter = zone_params.placement_rules.begin();
+         iter != zone_params.placement_rules.end(); ++iter) {
       const string& placement_name = iter->first;
       if (placement_targets.find(placement_name) == placement_targets.end()) {
         RGWZoneGroupPlacementTarget placement_target;
@@ -1623,7 +1623,7 @@ int get_zones_pool_set(CephContext* cct,
       pool_names.insert(zone.user_uid_pool);
       pool_names.insert(zone.roles_pool);
       pool_names.insert(zone.reshard_pool);
-      for(auto& iter : zone.placement_pools) {
+      for(auto& iter : zone.placement_rules) {
 	pool_names.insert(iter.second.index_pool);
 	pool_names.insert(iter.second.data_pool);
 	pool_names.insert(iter.second.data_extra_pool);
@@ -1695,7 +1695,7 @@ int RGWZoneParams::fix_pool_names()
   roles_pool = fix_zone_pool_dup(pools, name, ".rgw.meta:roles", roles_pool);
   reshard_pool = fix_zone_pool_dup(pools, name, ".rgw.log:reshard", reshard_pool);
 
-  for(auto& iter : placement_pools) {
+  for(auto& iter : placement_rules) {
     iter.second.index_pool = fix_zone_pool_dup(pools, name, "." + default_bucket_index_pool_suffix,
                                                iter.second.index_pool);
     iter.second.data_pool = fix_zone_pool_dup(pools, name, "." + default_storage_pool_suffix,
@@ -1719,7 +1719,7 @@ int RGWZoneParams::create(bool exclusive)
     default_placement.index_pool = name + "." + default_bucket_index_pool_suffix;
     default_placement.data_pool =  name + "." + default_storage_pool_suffix;
     default_placement.data_extra_pool = name + "." + default_storage_extra_pool_suffix;
-    placement_pools["default-placement"] = default_placement;
+    placement_rules["default-placement"] = default_placement;
   }
 
   r = fix_pool_names();
@@ -1820,8 +1820,8 @@ int RGWZoneParams::set_as_default(bool exclusive)
 const string& RGWZoneParams::get_compression_type(const string& placement_rule) const
 {
   static const std::string NONE{"none"};
-  auto p = placement_pools.find(placement_rule);
-  if (p == placement_pools.end()) {
+  auto p = placement_rules.find(placement_rule);
+  if (p == placement_rules.end()) {
     return NONE;
   }
   const auto& type = p->second.compression_type;
@@ -4803,8 +4803,8 @@ int RGWRados::open_bucket_index_ctx(const RGWBucketInfo& bucket_info, librados::
   if (rule->empty()) {
     rule = &zonegroup.default_placement;
   }
-  auto iter = zone_params.placement_pools.find(*rule);
-  if (iter == zone_params.placement_pools.end()) {
+  auto iter = zone_params.placement_rules.find(*rule);
+  if (iter == zone_params.placement_rules.end()) {
     ldout(cct, 0) << "could not find placement rule " << *rule << " within zonegroup " << dendl;
     return -EINVAL;
   }
@@ -5892,8 +5892,8 @@ int RGWRados::select_bucket_location_by_rule(const string& location_rule, RGWZon
    * checking it for the local zone, because that's where this bucket object is going to
    * reside.
    */
-  map<string, RGWZonePlacementInfo>::iterator piter = get_zone_params().placement_pools.find(location_rule);
-  if (piter == get_zone_params().placement_pools.end()) {
+  map<string, RGWZonePlacementInfo>::iterator piter = get_zone_params().placement_rules.find(location_rule);
+  if (piter == get_zone_params().placement_rules.end()) {
     /* couldn't find, means we cannot really place data for this bucket in this zone */
     if (get_zonegroup().equals(zonegroup_id)) {
       /* that's a configuration error, zone should have that rule, as we're within the requested
@@ -5917,7 +5917,7 @@ int RGWRados::select_bucket_location_by_rule(const string& location_rule, RGWZon
 int RGWRados::select_bucket_placement(RGWUserInfo& user_info, const string& zonegroup_id, const string& placement_rule,
                                       string *pselected_rule_name, RGWZonePlacementInfo *rule_info)
 {
-  if (!get_zone_params().placement_pools.empty()) {
+  if (!get_zone_params().placement_rules.empty()) {
     return select_new_bucket_location(user_info, zonegroup_id, placement_rule,
                                       pselected_rule_name, rule_info);
   }
