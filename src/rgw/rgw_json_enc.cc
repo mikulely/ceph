@@ -985,13 +985,13 @@ void RGWZone::decode_json(JSONObj *obj)
 
 void RGWZoneGroupPlacementTarget::dump(Formatter *f) const
 {
-  encode_json("name", name, f);
+  encode_json("id", id, f);
   encode_json("tags", tags, f);
 }
 
 void RGWZoneGroupPlacementTarget::decode_json(JSONObj *obj)
 {
-  JSONDecoder::decode_json("name", name, obj);
+  JSONDecoder::decode_json("id", id, obj);
   JSONDecoder::decode_json("tags", tags, obj);
 }
 
@@ -1021,7 +1021,7 @@ static void decode_placement_targets(map<string, RGWZoneGroupPlacementTarget>& t
 {
   RGWZoneGroupPlacementTarget t;
   t.decode_json(o);
-  targets[t.name] = t;
+  targets[t.id] = t;
 }
 
 
