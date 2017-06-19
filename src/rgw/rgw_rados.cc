@@ -5726,7 +5726,7 @@ void RGWRados::create_bucket_id(string *bucket_id)
  */
 int RGWRados::create_bucket(RGWUserInfo& owner, rgw_bucket& bucket,
                             const string& zonegroup_id,
-                            const string& placement_rule,
+                            const std::string& requested_placement_id,
                             const string& swift_ver_location,
                             const RGWQuotaInfo * pquota_info,
 			    map<std::string, bufferlist>& attrs,
@@ -5744,7 +5744,7 @@ int RGWRados::create_bucket(RGWUserInfo& owner, rgw_bucket& bucket,
 
   for (int i = 0; i < MAX_CREATE_RETRIES; i++) {
     int ret = 0;
-    ret = select_bucket_placement(owner, zonegroup_id, placement_rule,
+    ret = select_bucket_placement(owner, zonegroup_id, requested_placement_id,
                                   &selected_placement_id, &rule_info);
     if (ret < 0)
       return ret;
@@ -5839,7 +5839,8 @@ int RGWRados::create_bucket(RGWUserInfo& owner, rgw_bucket& bucket,
 }
 
 int RGWRados::select_new_bucket_location(RGWUserInfo& user_info, const std::string& zonegroup_id,
-                                         const std::string& request_rule_id, std::string *pselected_rule_id,
+                                         const std::string& requested_placement_id,
+                                         std::string *pselected_placement_id,
                                          RGWZonePlacementInfo *rule_info)
 {
   RGWZoneGroup zonegroup;
@@ -5852,22 +5853,22 @@ int RGWRados::select_new_bucket_location(RGWUserInfo& user_info, const std::stri
   /* find placement rule.
      Hierarchy: request rule > user default rule > zonegroup default rule
   */
-  std::string rule_id = request_rule_id;
-  if (rule_id.empty()) {
-    rule_id = user_info.default_placement_id;
-    if (rule_id.empty())
-      rule_id = zonegroup.default_placement_id;
+  std::string placement_id = requested_placement_id;
+  if (placement_id.empty()) {
+    placement_id = user_info.default_placement_id;
+    if (placement_id.empty())
+      placement_id = zonegroup.default_placement_id;
   }
 
-  if (rule_id.empty()) {
-    ldout(cct, 0) << "misconfiguration, should not have an empty placement rule id " << dendl;
+  if (placement_id.empty()) {
+    ldout(cct, 0) << "misconfiguration, should not have an empty placement id " << dendl;
     return -EIO;
   }
 
   /* check that rule exists within the specific zonegroup */
-  auto titer = zonegroup.placement_targets.find(rule_id);
+  auto titer = zonegroup.placement_targets.find(placement_id);
   if (titer == zonegroup.placement_targets.end()) {
-    ldout(cct, 0) << "could not find placement rule " << rule_id << " within zonegroup " << dendl;
+    ldout(cct, 0) << "could not find placement id " << placement_id << " within zonegroup " << dendl;
     return -EINVAL;
   }
 
@@ -5878,10 +5879,10 @@ int RGWRados::select_new_bucket_location(RGWUserInfo& user_info, const std::stri
     return -EPERM;
   }
 
-  if (pselected_rule_id)
-    *pselected_rule_id = rule_id;
+  if (pselected_placement_id)
+    *pselected_placement_id = placement_id;
 
-  return select_bucket_location_by_rule(rule_id, rule_info);
+  return select_bucket_location_by_rule(placement_id, rule_info);
 }
 
 int RGWRados::select_bucket_location_by_rule(const string& location_rule, RGWZonePlacementInfo *rule_info)
@@ -5920,16 +5921,17 @@ int RGWRados::select_bucket_location_by_rule(const string& location_rule, RGWZon
   return 0;
 }
 
-int RGWRados::select_bucket_placement(RGWUserInfo& user_info, const string& zonegroup_id, const string& placement_rule,
-                                      std::string *pselected_rule_id, RGWZonePlacementInfo *rule_info)
+int RGWRados::select_bucket_placement(RGWUserInfo& user_info, const std::string& zonegroup_id,
+                                      const std::string& requested_placement_id,
+                                      std::string *pselected_placement_id, RGWZonePlacementInfo *rule_info)
 {
   if (!get_zone_params().placement_rules.empty()) {
-    return select_new_bucket_location(user_info, zonegroup_id, placement_rule,
-                                      pselected_rule_id, rule_info);
+    return select_new_bucket_location(user_info, zonegroup_id, requested_placement_id,
+                                      pselected_placement_id, rule_info);
   }
 
-  if (pselected_rule_id) {
-    pselected_rule_id->clear();
+  if (pselected_placement_id) {
+    pselected_placement_id->clear();
   }
 
   return select_legacy_bucket_placement(rule_info);
