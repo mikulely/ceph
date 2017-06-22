@@ -611,7 +611,7 @@ struct RGWUserInfo
   RGWUserCaps caps;
   __u8 admin;
   __u8 system;
-  string default_placement;
+  std::string default_placement_id;
   list<string> placement_tags;
   RGWQuotaInfo bucket_quota;
   map<int, string> temp_url_keys;
@@ -669,7 +669,7 @@ struct RGWUserInfo
      ::encode(caps, bl);
      ::encode(op_mask, bl);
      ::encode(system, bl);
-     ::encode(default_placement, bl);
+     ::encode(default_placement_id, bl);
      ::encode(placement_tags, bl);
      ::encode(bucket_quota, bl);
      ::encode(temp_url_keys, bl);
@@ -730,7 +730,7 @@ struct RGWUserInfo
     }
     if (struct_v >= 13) {
       ::decode(system, bl);
-      ::decode(default_placement, bl);
+      ::decode(default_placement_id, bl);
       ::decode(placement_tags, bl); /* tags of allowed placement rules */
     }
     if (struct_v >= 14) {
