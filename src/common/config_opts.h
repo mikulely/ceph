@@ -1631,7 +1631,7 @@ OPTION(rgw_default_realm_info_oid, OPT_STR, "default.realm")  // oid where defau
 OPTION(rgw_period_root_pool, OPT_STR, ".rgw.root")  // pool where all period info is stored
 OPTION(rgw_period_latest_epoch_info_oid, OPT_STR, ".latest_epoch") // oid where current period info is stored
 OPTION(rgw_log_nonexistent_bucket, OPT_BOOL, false)
-OPTION(rgw_log_object_name, OPT_STR, "%Y-%m-%d-%H-%i-%n")      // man date to see codes (a subset are supported)
+OPTION(rgw_log_object_name, OPT_STR, "%Y-%m-%d-%H-%i-%n-%u")      // man date to see codes (a subset are supported)
 OPTION(rgw_log_object_name_utc, OPT_BOOL, false)
 OPTION(rgw_usage_max_shards, OPT_INT, 32)
 OPTION(rgw_usage_max_user_shards, OPT_INT, 1)
