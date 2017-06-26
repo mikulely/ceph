@@ -771,16 +771,20 @@ struct rgw_usage_log_entry {
   rgw_user owner;
   rgw_user payer; /* if empty, same as owner */
   string bucket;
+  std::string subuser;
   uint64_t epoch;
   rgw_usage_data total_usage; /* this one is kept for backwards compatibility */
   map<string, rgw_usage_data> usage_map;
+  map<string, map<string, rgw_usage_data>> subuser_usaage_map;
 
   rgw_usage_log_entry() : epoch(0) {}
   rgw_usage_log_entry(string& o, string& b) : owner(o), bucket(b), epoch(0) {}
   rgw_usage_log_entry(string& o, string& p, string& b) : owner(o), payer(p), bucket(b), epoch(0) {}
+  rgw_usage_log_entry(string& o, string& p, string& b, string& sb) : owner(o), payer(p), bucket(b), subuser(sb), epoch(0)  {}
+
 
   void encode(bufferlist& bl) const {
-    ENCODE_START(3, 1, bl);
+    ENCODE_START(4, 1, bl);
     ::encode(owner.to_str(), bl);
     ::encode(bucket, bl);
     ::encode(epoch, bl);
@@ -790,9 +794,10 @@ struct rgw_usage_log_entry {
     ::encode(total_usage.successful_ops, bl);
     ::encode(usage_map, bl);
     ::encode(payer.to_str(), bl);
+    ::encode(subuser, bl);
+    ::encode(subuser_usaage_map, bl);
     ENCODE_FINISH(bl);
   }
-
 
    void decode(bufferlist::iterator& bl) {
     DECODE_START(3, bl);
@@ -814,6 +819,10 @@ struct rgw_usage_log_entry {
       string p;
       ::decode(p, bl);
       payer.from_str(p);
+    }
+    if (struct_v >= 4) {
+      ::decode(subuser, bl);
+      ::decode(subuser_usaage_map, bl);
     }
     DECODE_FINISH(bl);
   }
