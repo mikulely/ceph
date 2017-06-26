@@ -488,7 +488,6 @@ public:
       : subuser(parse_subuser_info(subuser, user_info)),
         user_info(user_info) { }
 
-  void parse_subuser_info(const std::string& subuser_name, const RGWUserInfo &uinfo);
   uint32_t get_perms_from_aclspec(const aclspec_t& aclspec) const override;
   bool is_admin_of(const rgw_user& uid) const override;
   bool is_owner_of(const rgw_user& uid) const override;

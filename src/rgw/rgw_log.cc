@@ -210,7 +210,12 @@ static void log_usage(struct req_state *s, const string& op_name)
 
   string u = user.to_str();
   string p = payer.to_str();
+
   rgw_usage_log_entry entry(u, p, bucket_name);
+  const auto subuser = s->auth.identity->get_subuser_name();
+
+  if (subuser && subuser->empty())
+     entry.set_subuser(*subuser);
 
   uint64_t bytes_sent = ACCOUNTING_IO(s)->get_bytes_sent();
   uint64_t bytes_received = ACCOUNTING_IO(s)->get_bytes_received();
