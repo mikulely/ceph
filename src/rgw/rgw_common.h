@@ -104,6 +104,8 @@ using ceph::crypto::MD5;
 
 #define RGW_ATTR_COMPRESSION    RGW_ATTR_PREFIX "compression"
 
+#define RGW_ATTR_STORAGE_CLASS	RGW_ATTR_PREFIX "storage-class"
+
 /* IAM Policy */
 #define RGW_ATTR_IAM_POLICY	RGW_ATTR_PREFIX "iam-policy"
 
@@ -214,6 +216,7 @@ using ceph::crypto::MD5;
 #define ERR_INVALID_TAG          2210
 #define ERR_ZERO_IN_URL          2211
 #define ERR_MALFORMED_ACL_ERROR  2212
+#define ERR_INVALID_STORAGE_CLASS 2213
 
 #define ERR_BUSY_RESHARDING      2300
 
@@ -1835,6 +1838,7 @@ struct req_state {
   string dialect;
   string req_id;
   string trans_id;
+  std::string placement_id;
 
   req_state(CephContext* _cct, RGWEnv* e, RGWUserInfo* u);
   ~req_state();

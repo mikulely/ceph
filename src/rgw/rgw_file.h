@@ -2260,7 +2260,7 @@ public:
     RGWPutObjProcessor_Atomic *processor =
       new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket,
 				    s->object.name, part_size, s->req_id,
-				    s->bucket_info.versioning_enabled());
+				    s->bucket_info.versioning_enabled(), nullptr);
     processor->set_olh_epoch(olh_epoch);
     processor->set_version_id(version_id);
     return processor;

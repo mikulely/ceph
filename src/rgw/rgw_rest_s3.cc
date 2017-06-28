@@ -1242,6 +1242,32 @@ int RGWPutObj_ObjStore_S3::get_params()
     return ret;
 
   policy = s3policy;
+ 
+  std::string requested_placement_id = s->info.env->get("x-amz-storage-class");
+  const auto& zonegroup = store->get_zonegroup();
+  if (!requested_placement_id.empty()) {
+    const auto& pit = zonegroup.placement_targets.find(requested_placement_id);
+    if (pit == zonegroup.placement_targets.end()) {
+      ldout(s->cct, 0) << "placement rule (" << requested_placement_id << ")"
+                       << " doesn't exist in the placement targets of zonegroup"
+                       << " (" << store->get_zonegroup().api_name << ")" << dendl;
+      op_ret = -ERR_INVALID_LOCATION_CONSTRAINT;
+      s->err.message = "The x-amz-storage-class " + requested_placement_id +
+                       " does not exist";
+      return op_ret;
+    } else {
+      // todo check requested_placement_id and bucket_info.placement_rule 
+      // using same index/data pool
+      if (true) {
+        s->placement_id = requested_placement_id;
+        ldout(s->cct, 20) << "put obj with placement rule (" << requested_placement_id << ")"
+                          << dendl;
+      } else {
+        s->placement_id = s->bucket_info.placement_rule;
+      }
+    }
+  }
+
 
   if_match = s->info.env->get("HTTP_IF_MATCH");
   if_nomatch = s->info.env->get("HTTP_IF_NONE_MATCH");
@@ -2474,6 +2500,27 @@ int RGWInitMultipart_ObjStore_S3::get_params()
     return op_ret;
 
   policy = s3policy;
+
+  std::string requested_placement_id = s->info.env->get("x-amz-storage-class");
+  const auto& zonegroup = store->get_zonegroup();
+  if (!requested_placement_id.empty()) {
+    const auto& pit = zonegroup.placement_targets.find(requested_placement_id);
+    if (pit == zonegroup.placement_targets.end()) {
+      ldout(s->cct, 0) << "placement rule (" << requested_placement_id << ")"
+                       << " doesn't exist in the placement targets of zonegroup"
+                       << " (" << store->get_zonegroup().api_name << ")" << dendl;
+      op_ret = -ERR_INVALID_LOCATION_CONSTRAINT;
+      s->err.message = "The x-amz-storage-class " + requested_placement_id +
+                       " does not exist";
+      return op_ret;
+    } else {
+      // todo check requested_placement_id and bucket_info.placement_rule 
+      // using same index/data pool
+      s->placement_id = requested_placement_id;
+      ldout(s->cct, 20) << "put obj with placement rule (" << requested_placement_id << ")"
+                        << dendl;
+    }
+  }
 
   return 0;
 }

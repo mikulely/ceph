@@ -2663,7 +2663,14 @@ int RGWPutObjProcessor_Atomic::prepare(RGWRados *store, string *oid_rand)
 
   manifest.set_trivial_rule(max_chunk_size, store->ctx()->_conf->rgw_obj_stripe_size);
 
-  r = manifest_gen.create_begin(store->ctx(), &manifest, bucket_info.placement_rule, head_obj.bucket, head_obj);
+  std::string pid;
+  if (s)
+    pid = s->placement_id;
+  else
+    pid = bucket_info.placement_rule;
+
+
+  r = manifest_gen.create_begin(store->ctx(), &manifest, s->placement_id, head_obj.bucket, head_obj);
   if (r < 0) {
     return r;
   }
@@ -7655,7 +7662,8 @@ int RGWRados::fetch_remote_obj(RGWObjectCtx& obj_ctx,
 
   RGWPutObjProcessor_Atomic processor(obj_ctx,
                                       dest_bucket_info, dest_obj.bucket, dest_obj.key.name,
-                                      cct->_conf->rgw_obj_stripe_size, tag, dest_bucket_info.versioning_enabled());
+                                      cct->_conf->rgw_obj_stripe_size, tag,
+				      dest_bucket_info.versioning_enabled(), nullptr); //todo
   if (version_id && *version_id != "null") {
     processor.set_version_id(*version_id);
   }
@@ -8208,7 +8216,8 @@ int RGWRados::copy_obj_data(RGWObjectCtx& obj_ctx,
 
   RGWPutObjProcessor_Atomic processor(obj_ctx,
                                       dest_bucket_info, dest_obj.bucket, dest_obj.get_oid(),
-                                      cct->_conf->rgw_obj_stripe_size, tag, dest_bucket_info.versioning_enabled());
+                                      cct->_conf->rgw_obj_stripe_size, tag,
+				      dest_bucket_info.versioning_enabled(), nullptr); // todo
   if (version_id) {
     processor.set_version_id(*version_id);
   }

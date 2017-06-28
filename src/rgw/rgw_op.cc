@@ -2961,7 +2961,7 @@ int RGWPutObjProcessor_Multipart::prepare(RGWRados *store, string *oid_rand)
 
   manifest.set_multipart_part_rule(store->ctx()->_conf->rgw_obj_stripe_size, num);
 
-  int r = manifest_gen.create_begin(store->ctx(), &manifest, s->bucket_info.placement_rule, bucket, target_obj);
+  int r = manifest_gen.create_begin(store->ctx(), &manifest, s->placement_id, bucket, target_obj);
   if (r < 0) {
     return r;
   }
@@ -3060,7 +3060,9 @@ RGWPutObjProcessor *RGWPutObj::select_processor(RGWObjectCtx& obj_ctx, bool *is_
   uint64_t part_size = s->cct->_conf->rgw_obj_stripe_size;
 
   if (!multipart) {
-    processor = new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket, s->object.name, part_size, s->req_id, s->bucket_info.versioning_enabled());
+    processor = new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket, s->object.name, 
+                                              part_size, s->req_id,
+                                              s->bucket_info.versioning_enabled(), s);
     (static_cast<RGWPutObjProcessor_Atomic *>(processor))->set_olh_epoch(olh_epoch);
     (static_cast<RGWPutObjProcessor_Atomic *>(processor))->set_version_id(version_id);
   } else {
@@ -3222,6 +3224,8 @@ void RGWPutObj::execute()
   CompressorRef plugin;
   boost::optional<RGWPutObj_Compress> compressor;
 
+  std::string init_placement_id;
+
   bool need_calc_md5 = (dlo_manifest == NULL) && (slo_info == NULL);
   perfcounter->inc(l_rgw_put);
   op_ret = -EINVAL;
@@ -3282,6 +3286,36 @@ void RGWPutObj::execute()
     strncpy(supplied_md5, supplied_etag, sizeof(supplied_md5) - 1);
     supplied_md5[sizeof(supplied_md5) - 1] = '\0';
   }
+
+  /* Get Storage Class Setted by InitMultipart */
+  if (multipart) {
+    rgw_obj obj(s->bucket, s->object);
+    map<string,bufferlist> attrs;
+    ldout(s->cct, 20) << "get storage class for obj: " << s->object << dendl;
+    int ret = get_obj_attrs(store, s, obj, attrs);
+    if ( ret < 0) {
+      ldout(s->cct, 0) << "ERROR: failed to get ob attrs for obj: " << s->object << dendl;
+      op_ret = -ERR_INVALID_STORAGE_CLASS;
+      return;
+    }
+  
+    const auto& attr_iter = attrs.find(RGW_ATTR_STORAGE_CLASS);
+    if (attr_iter != attrs.end()) {
+      try {
+        ::decode(init_placement_id, attr_iter->second);
+      } catch (buffer::error& err) {
+        ldout(s->cct, 0) << "ERROR: failed to decode storage class" << dendl;
+        op_ret = -ERR_INVALID_STORAGE_CLASS;
+        return;
+      }
+    }
+  }
+
+  if (init_placement_id.empty())
+    s->placement_id = s->bucket_info.placement_rule;
+  else
+    s->placement_id = init_placement_id;
+
 
   processor = select_processor(*static_cast<RGWObjectCtx *>(s->obj_ctx), &multipart);
 
@@ -3550,23 +3584,7 @@ int RGWPostObj::verify_permission()
 {
   return 0;
 }
-/*
-RGWPutObjProcessor *RGWPostObj::select_processor(RGWObjectCtx& obj_ctx)
-{
-  RGWPutObjProcessor *processor;
 
-  uint64_t part_size = s->cct->_conf->rgw_obj_stripe_size;
-
-  processor = new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket, s->object.name, part_size, s->req_id, s->bucket_info.versioning_enabled());
-
-  return processor;
-}
-
-void RGWPostObj::dispose_processor(RGWPutObjDataProcessor *processor)
-{
-  delete processor;
-}
-*/
 void RGWPostObj::pre_exec()
 {
   rgw_bucket_object_pre_exec(s);
@@ -3652,7 +3670,7 @@ void RGWPostObj::execute()
                                         /* part size */
                                         s->cct->_conf->rgw_obj_stripe_size,
                                         s->req_id,
-                                        s->bucket_info.versioning_enabled());
+                                        s->bucket_info.versioning_enabled(), s);
     /* No filters by default. */
     filter = &processor;
 
@@ -5085,6 +5103,12 @@ void RGWInitMultipart::execute()
 
   rgw_get_request_metadata(s->cct, s->info, attrs);
 
+  if (!s->placement_id.empty()) {
+    bufferlist tmp;
+    ::encode(s->placement_id, tmp);
+    attrs[RGW_ATTR_STORAGE_CLASS] = tmp;
+  }
+
   do {
     char buf[33];
     gen_rand_alphanumeric(s->cct, buf, sizeof(buf) - 1);
@@ -6210,7 +6234,7 @@ int RGWBulkUploadOp::handle_file(const boost::string_ref path,
                                       /* part size */
                                       s->cct->_conf->rgw_obj_stripe_size,
                                       s->req_id,
-                                      binfo.versioning_enabled());
+                                      binfo.versioning_enabled(), s); // todo
 
   /* No filters by default. */
   filter = &processor;
