@@ -985,6 +985,7 @@ protected:
   bufferlist bl_aux;
   map<string, string> crypt_http_responses;
   string user_data;
+  std::string requested_placement_id;
 
   boost::optional<ceph::real_time> delete_at;
 

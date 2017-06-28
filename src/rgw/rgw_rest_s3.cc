@@ -1227,6 +1227,8 @@ int RGWPutObj_ObjStore_S3::get_params()
   copy_source = s->info.env->get("HTTP_X_AMZ_COPY_SOURCE");
   copy_source_range = s->info.env->get("HTTP_X_AMZ_COPY_SOURCE_RANGE");
 
+  requested_placement_id = s->info.env->get("x-amz-storage-class");
+
   /* handle x-amz-copy-source */
 
   if (copy_source) {
