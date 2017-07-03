@@ -1103,6 +1103,7 @@ WRITE_CLASS_ENCODER(RGWSystemMetaObj)
 struct RGWZonePlacementInfo {
   rgw_pool index_pool;
   rgw_pool data_pool;
+  rgw_pool tail_data_pool;
   rgw_pool data_extra_pool; /* if not set we should use data_pool */
   RGWBucketIndexType index_type;
   std::string compression_type;
@@ -1110,12 +1111,13 @@ struct RGWZonePlacementInfo {
   RGWZonePlacementInfo() : index_type(RGWBIType_Normal) {}
 
   void encode(bufferlist& bl) const {
-    ENCODE_START(6, 1, bl);
+    ENCODE_START(7, 1, bl);
     ::encode(index_pool.to_str(), bl);
     ::encode(data_pool.to_str(), bl);
     ::encode(data_extra_pool.to_str(), bl);
     ::encode((uint32_t)index_type, bl);
     ::encode(compression_type, bl);
+    ::encode(tail_data_pool.to_str(), bl);
     ENCODE_FINISH(bl);
   }
 
@@ -1140,6 +1142,11 @@ struct RGWZonePlacementInfo {
     if (struct_v >= 6) {
       ::decode(compression_type, bl);
     }
+    if (struct_v >= 7) {
+      string tail_data_pool_str;
+      ::decode(tail_data_pool_str, bl);
+      tail_data_pool = rgw_pool(tail_data_pool_str);
+    }
     DECODE_FINISH(bl);
   }
   const rgw_pool& get_data_extra_pool() const {
@@ -1148,6 +1155,14 @@ struct RGWZonePlacementInfo {
     }
     return data_extra_pool;
   }
+
+  const rgw_pool& get_tail_data_pool() const {
+    if (tail_data_pool.empty()) {
+      return data_pool;
+    }
+    return tail_data_pool;
+  }
+
   void dump(Formatter *f) const;
   void decode_json(JSONObj *obj);
 };

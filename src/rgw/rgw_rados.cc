@@ -1644,6 +1644,7 @@ int get_zones_pool_set(CephContext* cct,
       for(auto& iter : zone.placement_rules) {
 	pool_names.insert(iter.second.index_pool);
 	pool_names.insert(iter.second.data_pool);
+	pool_names.insert(iter.second.tail_data_pool);
 	pool_names.insert(iter.second.data_extra_pool);
       }
     }

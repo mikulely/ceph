@@ -254,6 +254,7 @@ void _usage()
   cout << "   --endpoints=<list>        zone endpoints\n";
   cout << "   --index_pool=<pool>       placement rule index pool for zone placement commands\n";
   cout << "   --data_pool=<pool>        placement rule data pool for zone placement commands\n";
+  cout << "   --tail-data-pool=<pool>   placement rule data pool for zone placement commands\n";
   cout << "   --data_extra_pool=<pool>  placement rule data extra (non-ec) pool for zone placement commands\n";
   cout << "   --placement-index-type=<type>\n";
   cout << "                             placement rule index type (normal, indexless, or #id) for zone placement commands\n";
@@ -2400,6 +2401,7 @@ int main(int argc, const char **argv)
 
   boost::optional<string> index_pool;
   boost::optional<string> data_pool;
+  boost::optional<string> tail_data_pool;
   boost::optional<string> data_extra_pool;
   RGWBucketIndexType placement_index_type = RGWBIType_Normal;
   bool index_type_specified = false;
@@ -2701,6 +2703,8 @@ int main(int argc, const char **argv)
       index_pool = val;
     } else if (ceph_argparse_witharg(args, i, &val, "--data-pool", (char*)NULL)) {
       data_pool = val;
+    } else if (ceph_argparse_witharg(args, i, &val, "--tail-data-pool", (char*)NULL)) {
+      tail_data_pool = val;
     } else if (ceph_argparse_witharg(args, i, &val, "--data-extra-pool", (char*)NULL)) {
       data_extra_pool = val;
     } else if (ceph_argparse_witharg(args, i, &val, "--placement-index-type", (char*)NULL)) {
@@ -4195,6 +4199,11 @@ int main(int argc, const char **argv)
           if (data_extra_pool) {
             info.data_extra_pool = *data_extra_pool;
           }
+          if (tail_data_pool) {
+            info.tail_data_pool = *tail_data_pool;
+          } else {
+            info.tail_data_pool = *data_pool;
+          }
           if (index_type_specified) {
             info.index_type = placement_index_type;
           }
@@ -4217,6 +4226,9 @@ int main(int argc, const char **argv)
           }
           if (data_extra_pool) {
             info.data_extra_pool = *data_extra_pool;
+          }
+          if (tail_data_pool) {
+            info.tail_data_pool = *tail_data_pool;
           }
           if (index_type_specified) {
             info.index_type = placement_index_type;
