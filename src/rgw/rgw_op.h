@@ -1558,6 +1558,7 @@ public:
 class RGWInitMultipart : public RGWOp {
 protected:
   string upload_id;
+  std::string requested_placement_id;
   RGWAccessControlPolicy policy;
 
 public:

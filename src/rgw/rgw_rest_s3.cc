@@ -2456,6 +2456,8 @@ int RGWInitMultipart_ObjStore_S3::get_params()
 
   policy = s3policy;
 
+  requested_placement_id = s->info.env->get("x-amz-storage-class");
+
   return 0;
 }
 
