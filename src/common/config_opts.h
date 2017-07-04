@@ -1550,6 +1550,7 @@ OPTION(rgw_bl_work_time, OPT_STR, "00:00-06:00") //job process bl at 00:00-06:00
  */
 OPTION(rgw_bl_url, OPT_STR, "http://localhost:7480")
 OPTION(rgw_bl_debug_interval, OPT_INT, -1)  // debug run interval, in seconds
+OPTION(rgw_bl_ops_log_lock_duration, OPT_INT, 30) // exclusive lock duration for reading/writing ops log
 
 OPTION(rgw_data, OPT_STR, "/var/lib/ceph/radosgw/$cluster-$id")
 OPTION(rgw_enable_apis, OPT_STR, "s3, s3website, swift, swift_auth, admin")
@@ -1664,7 +1665,7 @@ OPTION(rgw_default_realm_info_oid, OPT_STR, "default.realm")  // oid where defau
 OPTION(rgw_period_root_pool, OPT_STR, ".rgw.root")  // pool where all period info is stored
 OPTION(rgw_period_latest_epoch_info_oid, OPT_STR, ".latest_epoch") // oid where current period info is stored
 OPTION(rgw_log_nonexistent_bucket, OPT_BOOL, false)
-OPTION(rgw_log_object_name, OPT_STR, "%Y-%m-%d-%H-%i-%n-%u")      // man date to see codes (a subset are supported)
+OPTION(rgw_log_object_name, OPT_STR, "%Y-%m-%d-%H-%i-%n")      // man date to see codes (a subset are supported)
 OPTION(rgw_log_object_name_utc, OPT_BOOL, false)
 OPTION(rgw_usage_max_shards, OPT_INT, 32)
 OPTION(rgw_usage_max_user_shards, OPT_INT, 1)
