@@ -1551,6 +1551,7 @@ OPTION(rgw_bl_work_time, OPT_STR, "00:00-06:00") //job process bl at 00:00-06:00
 OPTION(rgw_bl_url, OPT_STR, "http://localhost:7480")
 OPTION(rgw_bl_debug_interval, OPT_INT, -1)  // debug run interval, in seconds
 OPTION(rgw_bl_ops_log_lock_duration, OPT_INT, 30) // exclusive lock duration for reading/writing ops log
+OPTION(rgw_bl_max_ops_log_entries, OPT_INT, 10000)
 
 OPTION(rgw_data, OPT_STR, "/var/lib/ceph/radosgw/$cluster-$id")
 OPTION(rgw_enable_apis, OPT_STR, "s3, s3website, swift, swift_auth, admin")
