@@ -78,6 +78,8 @@ set(rgw_a_srcs
   rgw_sync_module_es.cc
   rgw_sync_module_es_rest.cc
   rgw_sync_module_log.cc
+  rgw_custom_access.cc
+  rgw_sync_module_custom.cc
   rgw_period_history.cc
   rgw_period_puller.cc
   rgw_period_pusher.cc
@@ -185,8 +187,8 @@ target_link_libraries(radosgw radosgw_a librados
   cls_rgw_client cls_lock_client cls_refcount_client
   cls_log_client cls_statelog_client cls_timeindex_client
   cls_version_client cls_replica_log_client cls_user_client
-  global ${FCGI_LIBRARY} ${LIB_RESOLV}
-  ${CURL_LIBRARIES} ${EXPAT_LIBRARIES} ${BLKID_LIBRARIES}
+  global fcgi ${LIB_RESOLV}
+  ${CURL_LIBRARIES} ${EXPAT_LIBRARIES} ${SSL_LIBRARIES} ${BLKID_LIBRARIES}
   ${ALLOC_LIBS})
 # radosgw depends on cls libraries at runtime, but not as link dependencies
 add_dependencies(radosgw cls_rgw cls_lock cls_refcount
@@ -202,7 +204,7 @@ target_link_libraries(radosgw-admin rgw_a librados
   cls_rgw_client cls_lock_client cls_refcount_client
   cls_log_client cls_statelog_client cls_timeindex_client
   cls_version_client cls_replica_log_client cls_user_client
-  global ${FCGI_LIBRARY} ${LIB_RESOLV}
+  global ${FCGI_LIBRARY} ${LIB_RESOLV} 
   ${CURL_LIBRARIES} ${EXPAT_LIBRARIES} ${SSL_LIBRARIES} ${BLKID_LIBRARIES})
 install(TARGETS radosgw-admin DESTINATION bin)
 
