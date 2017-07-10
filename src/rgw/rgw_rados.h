@@ -128,6 +128,7 @@ class rgw_obj_select {
   rgw_obj obj;
   rgw_raw_obj raw_obj;
   bool is_raw;
+  bool is_tail;
 
 public:
   rgw_obj_select() : is_raw(false) {}
@@ -157,7 +158,8 @@ public:
     return *this;
   }
 
-  void set_placement_rule(const string& rule) {
+  void set_placement_rule(const string& rule, bool is_tail = false) {
+    is_tail = is_tail;
     placement_rule = rule;
   }
 };
@@ -2570,8 +2572,10 @@ public:
   int get_legacy_bucket_placement_info(RGWZonePlacementInfo *placement_info);
   void create_bucket_id(string *bucket_id);
 
-  bool get_obj_data_pool(const string& placement_rule, const rgw_obj& obj, rgw_pool *pool);
-  bool obj_to_raw(const string& placement_rule, const rgw_obj& obj, rgw_raw_obj *raw_obj);
+  bool get_obj_data_pool(const string& placement_rule, const rgw_obj& obj,
+                         rgw_pool *pool, bool is_tail = false);
+  bool obj_to_raw(const string& placement_rule, const rgw_obj& obj, 
+                  rgw_raw_obj *raw_obj, bool is_tail = false);
 
   int create_bucket(RGWUserInfo& owner, rgw_bucket& bucket,
                             const string& zonegroup_id,

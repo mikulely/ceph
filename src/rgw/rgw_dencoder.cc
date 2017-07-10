@@ -205,11 +205,9 @@ void RGWObjManifest::get_implicit_location(uint64_t cur_part_id, uint64_t cur_st
   // to get the right shadow object location
   loc.key.set_instance(tail_instance);
 
-  location->set_placement_rule(tail_placement.placement_rule);
+  location->set_placement_rule(tail_placement.placement_rule, true);
   *location = loc;
 }
-
-
 
 void rgw_log_entry::generate_test_instances(list<rgw_log_entry*>& o)
 {
