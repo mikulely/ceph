@@ -1549,7 +1549,7 @@ OPTION(rgw_bl_work_time, OPT_STR, "00:00-06:00") //job process bl at 00:00-06:00
  * according to the rgw_frontends config option.
  */
 OPTION(rgw_bl_url, OPT_STR, "http://localhost:7480")
-OPTION(rgw_bl_debug_interval, OPT_INT, -1)  // debug run interval, in seconds
+OPTION(rgw_bl_deliver_interval, OPT_INT, -1)  // deliver interval, in seconds
 OPTION(rgw_bl_ops_log_lock_duration, OPT_INT, 30) // exclusive lock duration for reading/writing ops log
 OPTION(rgw_bl_max_ops_log_entries, OPT_INT, 10000)
 

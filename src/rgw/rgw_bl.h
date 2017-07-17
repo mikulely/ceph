@@ -85,7 +85,6 @@ class RGWBL {
 
   int process();
   int process(int index, int max_secs);
-  bool if_already_run_today(time_t& start_date);
   int list_bl_progress(const string& marker, uint32_t max_entries,
 		       map<string, int> *progress_map);
   int bucket_bl_prepare(int index);

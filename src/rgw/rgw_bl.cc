@@ -107,31 +107,6 @@ void RGWBL::initialize(CephContext *_cct, RGWRados *_store) {
   cookie = cookie_buf;
 }
 
-bool RGWBL::if_already_run_today(time_t& start_date)
-{
-  struct tm bdt;
-  time_t begin_of_day;
-  utime_t now = ceph_clock_now();
-  localtime_r(&start_date, &bdt);
-
-  bdt.tm_hour = 0;
-  bdt.tm_min = 0;
-  bdt.tm_sec = 0;
-  begin_of_day = mktime(&bdt);
-
-  if (cct->_conf->rgw_bl_debug_interval > 0) {
-    if ((now - begin_of_day) < cct->_conf->rgw_bl_debug_interval)
-      return true;
-    else
-      return false;
-  }
-
-  if (now - begin_of_day < 24*60*60)
-    return true;
-  else
-    return false;
-}
-
 void RGWBL::finalize()
 {
   delete[] obj_names;
@@ -870,15 +845,13 @@ int RGWBL::process(int index, int max_lock_secs)
       goto exit;
     }
 
-    if(!if_already_run_today(head.start_date)) {
-      head.start_date = now;
-      head.marker.clear();
-      ret = bucket_bl_prepare(index);
-      if (ret < 0) {
-        dout(0) << "RGWBL::process() failed to update bl object "
-                << obj_names[index] << ret << dendl;
-        goto exit;
-      }
+    head.start_date = now;
+    head.marker.clear();
+    ret = bucket_bl_prepare(index);
+    if (ret < 0) {
+      dout(0) << "RGWBL::process() failed to update bl object "
+              << obj_names[index] << ret << dendl;
+      goto exit;
     }
 
     ret = cls_rgw_bl_get_next_entry(store->bl_pool_ctx, obj_names[index],
@@ -961,24 +934,18 @@ bool RGWBL::BLWorker::should_work(utime_t& now)
   struct tm bdt;
   time_t tt = now.sec();
   localtime_r(&tt, &bdt);
-  if (cct->_conf->rgw_bl_debug_interval > 0) {
-    /* we're debugging, so say we can run */
+  if ((bdt.tm_hour*60 + bdt.tm_min >= start_hour*60 + start_minute) &&
+      (bdt.tm_hour*60 + bdt.tm_min <= end_hour*60 + end_minute)) {
     return true;
   } else {
-    if ((bdt.tm_hour*60 + bdt.tm_min >= start_hour*60 + start_minute) &&
-        (bdt.tm_hour*60 + bdt.tm_min <= end_hour*60 + end_minute)) {
-      return true;
-    } else {
-      return false;
-    }
+    return false;
   }
-
 }
 
 int RGWBL::BLWorker::schedule_next_start_time(utime_t& now)
 {
-  if (cct->_conf->rgw_bl_debug_interval > 0) {
-       int secs = cct->_conf->rgw_bl_debug_interval;
+  if (cct->_conf->rgw_bl_deliver_interval > 0) {
+       int secs = cct->_conf->rgw_bl_deliver_interval;
        return (secs);
   }
 
