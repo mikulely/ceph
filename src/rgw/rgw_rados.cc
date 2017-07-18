@@ -1635,6 +1635,7 @@ int get_zones_pool_set(CephContext* cct,
       for(auto& iter : zone.placement_pools) {
 	pool_names.insert(iter.second.index_pool);
 	pool_names.insert(iter.second.data_pool);
+	pool_names.insert(iter.second.tail_data_pool);
 	pool_names.insert(iter.second.data_extra_pool);
       }
     }
@@ -1727,6 +1728,7 @@ int RGWZoneParams::create(bool exclusive)
     RGWZonePlacementInfo default_placement;
     default_placement.index_pool = name + "." + default_bucket_index_pool_suffix;
     default_placement.data_pool =  name + "." + default_storage_pool_suffix;
+    default_placement.tail_data_pool = "." + RGW_DEFAULT_ZONE_ROOT_POOL;
     default_placement.data_extra_pool = name + "." + default_storage_extra_pool_suffix;
     placement_pools["default-placement"] = default_placement;
   }
