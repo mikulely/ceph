@@ -206,6 +206,7 @@ void RGWObjManifest::get_implicit_location(uint64_t cur_part_id, uint64_t cur_st
   loc.key.set_instance(tail_instance);
 
   location->set_placement_rule(tail_placement.placement_rule, true);
+  using_tail_data_pool = true;
   *location = loc;
 }
 

@@ -425,8 +425,10 @@ protected:
   }
 public:
 
+  bool using_tail_data_pool;
+
   RGWObjManifest() : explicit_objs(false), obj_size(0), head_size(0), max_head_size(0),
-                     begin_iter(this), end_iter(this) {}
+                     begin_iter(this), end_iter(this), using_tail_data_pool(false) {}
   RGWObjManifest(const RGWObjManifest& rhs) {
     *this = rhs;
   }
@@ -447,6 +449,7 @@ public:
 
     begin_iter.seek(rhs.begin_iter.get_ofs());
     end_iter.seek(rhs.end_iter.get_ofs());
+    using_tail_data_pool = rhs.using_tail_data_pool;
 
     return *this;
   }
@@ -478,7 +481,7 @@ public:
   }
 
   void encode(bufferlist& bl) const {
-    ENCODE_START(7, 6, bl);
+    ENCODE_START(8, 6, bl);
     ::encode(obj_size, bl);
     ::encode(objs, bl);
     ::encode(explicit_objs, bl);
@@ -499,11 +502,12 @@ public:
     }
     ::encode(head_placement_rule, bl);
     ::encode(tail_placement.placement_rule, bl);
+    ::encode(using_tail_data_pool, bl);
     ENCODE_FINISH(bl);
   }
 
   void decode(bufferlist::iterator& bl) {
-    DECODE_START_LEGACY_COMPAT_LEN_32(7, 2, 2, bl);
+    DECODE_START_LEGACY_COMPAT_LEN_32(8, 2, 2, bl);
     ::decode(obj_size, bl);
     ::decode(objs, bl);
     if (struct_v >= 3) {
@@ -569,6 +573,10 @@ public:
     if (struct_v >= 7) {
       ::decode(head_placement_rule, bl);
       ::decode(tail_placement.placement_rule, bl);
+    }
+
+    if (struct_v >= 8) {
+      ::decode(using_tail_data_pool, bl);
     }
 
     update_iterators();
