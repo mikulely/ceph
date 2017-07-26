@@ -2988,7 +2988,7 @@ int RGWPutObjProcessor_Multipart::prepare(RGWRados *store, string *oid_rand)
 
   manifest.set_multipart_part_rule(store->ctx()->_conf->rgw_obj_stripe_size, num);
 
-  int r = manifest_gen.create_begin(store->ctx(), &manifest, s->bucket_info.placement_rule, bucket, target_obj);
+  int r = manifest_gen.create_begin(store->ctx(), &manifest, placement_id, bucket, target_obj);
   if (r < 0) {
     return r;
   }
@@ -3084,12 +3084,17 @@ RGWPutObjProcessor *RGWPutObj::select_processor(RGWObjectCtx& obj_ctx, bool *is_
 
   uint64_t part_size = s->cct->_conf->rgw_obj_stripe_size;
 
+  const std::string& pid = s->placement_id.empty() ? s->bucket_info.placement_rule : s->placement_id;
+
   if (!(*is_multipart)) {
-    processor = new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket, s->object.name, part_size, s->req_id, s->bucket_info.versioning_enabled());
+    processor = new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket, s->object.name, 
+                                              part_size, s->req_id,
+                                              s->bucket_info.versioning_enabled(),
+                                              pid);
     (static_cast<RGWPutObjProcessor_Atomic *>(processor))->set_olh_epoch(olh_epoch);
     (static_cast<RGWPutObjProcessor_Atomic *>(processor))->set_version_id(version_id);
   } else {
-    processor = new RGWPutObjProcessor_Multipart(obj_ctx, s->bucket_info, part_size, s);
+    processor = new RGWPutObjProcessor_Multipart(obj_ctx, s->bucket_info, part_size, s, pid);
   }
 
   return processor;
@@ -3571,23 +3576,7 @@ int RGWPostObj::verify_permission()
 {
   return 0;
 }
-/*
-RGWPutObjProcessor *RGWPostObj::select_processor(RGWObjectCtx& obj_ctx)
-{
-  RGWPutObjProcessor *processor;
 
-  uint64_t part_size = s->cct->_conf->rgw_obj_stripe_size;
-
-  processor = new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket, s->object.name, part_size, s->req_id, s->bucket_info.versioning_enabled());
-
-  return processor;
-}
-
-void RGWPostObj::dispose_processor(RGWPutObjDataProcessor *processor)
-{
-  delete processor;
-}
-*/
 void RGWPostObj::pre_exec()
 {
   rgw_bucket_object_pre_exec(s);
@@ -3666,6 +3655,8 @@ void RGWPostObj::execute()
       ldout(s->cct, 15) << "supplied_md5=" << supplied_md5 << dendl;
     }
 
+    const std::string& pid = s->placement_id.empty() ? s->bucket_info.placement_rule : s->placement_id;
+
     RGWPutObjProcessor_Atomic processor(*static_cast<RGWObjectCtx *>(s->obj_ctx),
                                         s->bucket_info,
                                         s->bucket,
@@ -3673,7 +3664,8 @@ void RGWPostObj::execute()
                                         /* part size */
                                         s->cct->_conf->rgw_obj_stripe_size,
                                         s->req_id,
-                                        s->bucket_info.versioning_enabled());
+                                        s->bucket_info.versioning_enabled(),
+                                        pid);
     /* No filters by default. */
     filter = &processor;
 
@@ -6253,6 +6245,8 @@ int RGWBulkUploadOp::handle_file(const boost::string_ref path,
     return op_ret;
   }
 
+  const std::string& pid = s->placement_id.empty() ? s->bucket_info.placement_rule : s->placement_id;
+
   RGWPutObjProcessor_Atomic processor(obj_ctx,
                                       binfo,
                                       binfo.bucket,
@@ -6260,7 +6254,8 @@ int RGWBulkUploadOp::handle_file(const boost::string_ref path,
                                       /* part size */
                                       s->cct->_conf->rgw_obj_stripe_size,
                                       s->req_id,
-                                      binfo.versioning_enabled());
+                                      binfo.versioning_enabled(),
+                                      pid);
 
   /* No filters by default. */
   filter = &processor;
