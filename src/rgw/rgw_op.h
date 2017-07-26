@@ -991,6 +991,8 @@ protected:
 
   boost::optional<ceph::real_time> delete_at;
 
+  std::string placement_type;
+
 public:
   RGWPutObj() : ofs(0),
                 supplied_md5_b64(NULL),
@@ -1078,6 +1080,7 @@ protected:
   RGWAccessControlPolicy policy;
   map<string, bufferlist> attrs;
   boost::optional<ceph::real_time> delete_at;
+  std::string placement_type;
 
   /* Must be called after get_data() or the result is undefined. */
   virtual std::string get_current_filename() const = 0;
@@ -1564,6 +1567,7 @@ class RGWInitMultipart : public RGWOp {
 protected:
   string upload_id;
   RGWAccessControlPolicy policy;
+  std::string placement_type;
 
 public:
   RGWInitMultipart() {}
