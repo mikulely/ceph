@@ -1243,6 +1243,46 @@ int RGWPutObj_ObjStore_S3::get_params()
 
   policy = s3policy;
 
+  placement_type = s->info.env->get("HTTP_X_AMZ_STORAGE_CLASS", "");
+  if (!placement_type.empty()) {
+    std::string placement_id;
+    bool is_exist = false;
+    const auto& zonegroup = store->get_zonegroup();
+    for (const auto& target : zonegroup.placement_targets) {
+      if (target.second.type == placement_type) {
+         placement_id = target.second.name;
+         is_exist = true;
+         break;
+       }
+    }
+    if (!is_exist) {
+      ldout(s->cct, 0) << "placement type (" << placement_type << ")"
+                       << " doesn't exist in the placement targets of zonegroup"
+                       << " (" << store->get_zonegroup().api_name << ")" << dendl;
+      op_ret = -ERR_INVALID_STORAGE_CLASS;
+      s->err.message = "The x-amz-storage-class " + placement_type +
+                       " does not exist";
+      return op_ret;
+    }
+
+    auto& zone_params = store->get_zone_params();
+    bool is_valid = (!placement_id.empty() &&
+      (zone_params.placement_pools[placement_id].index_pool ==
+       zone_params.placement_pools[s->bucket_info.placement_rule].index_pool) &&
+      (zone_params.placement_pools[placement_id].data_pool ==
+       zone_params.placement_pools[s->bucket_info.placement_rule].data_pool));
+    if (is_valid) {
+      s->placement_id = placement_id;
+    } else {
+      op_ret = -ERR_INVALID_STORAGE_CLASS;
+      s->err.message = "The x-amz-storage-class (" + placement_type +
+                       ") must use the same index_pool and data_pool" +
+                       " with bucket default placement (" +
+                       s->bucket_info.placement_rule + ")";
+      return op_ret;
+    }
+  }
+
   if_match = s->info.env->get("HTTP_IF_MATCH");
   if_nomatch = s->info.env->get("HTTP_IF_NONE_MATCH");
   copy_source = s->info.env->get("HTTP_X_AMZ_COPY_SOURCE");
@@ -1529,6 +1569,46 @@ int RGWPostObj_ObjStore_S3::get_params()
   ldout(s->cct, 20) << "adding bucket to policy env: " << s->bucket.name
 		    << dendl;
   env.add_var("bucket", s->bucket.name);
+
+  placement_type = s->info.env->get("HTTP_X_AMZ_STORAGE_CLASS", "");
+  if (!placement_type.empty()) {
+    std::string placement_id;
+    bool is_exist = false;
+    const auto& zonegroup = store->get_zonegroup();
+    for (const auto& target : zonegroup.placement_targets) {
+      if (target.second.type == placement_type) {
+         placement_id = target.second.name;
+         is_exist = true;
+         break;
+       }
+    }
+    if (!is_exist) {
+      ldout(s->cct, 0) << "placement type (" << placement_type << ")"
+                       << " doesn't exist in the placement targets of zonegroup"
+                       << " (" << store->get_zonegroup().api_name << ")" << dendl;
+      op_ret = -ERR_INVALID_STORAGE_CLASS;
+      s->err.message = "The x-amz-storage-class " + placement_type +
+                       " does not exist";
+      return op_ret;
+    }
+
+    auto& zone_params = store->get_zone_params();
+    bool is_valid = (!placement_id.empty() &&
+      (zone_params.placement_pools[placement_id].index_pool ==
+       zone_params.placement_pools[s->bucket_info.placement_rule].index_pool) &&
+      (zone_params.placement_pools[placement_id].data_pool ==
+       zone_params.placement_pools[s->bucket_info.placement_rule].data_pool));
+    if (is_valid) {
+      s->placement_id = placement_id;
+    } else {
+      op_ret = -ERR_INVALID_STORAGE_CLASS;
+      s->err.message = "The x-amz-storage-class (" + placement_type +
+                       ") must use the same index_pool and data_pool" +
+                       " with bucket default placement (" +
+                       s->bucket_info.placement_rule + ")";
+      return op_ret;
+    }
+  }
 
   bool done;
   do {
@@ -2474,6 +2554,47 @@ int RGWInitMultipart_ObjStore_S3::get_params()
     return op_ret;
 
   policy = s3policy;
+
+  placement_type = s->info.env->get("HTTP_X_AMZ_STORAGE_CLASS", "");
+  if (!placement_type.empty()) {
+    std::string placement_id;
+    bool is_exist = false;
+    const auto& zonegroup = store->get_zonegroup();
+    for (const auto& target : zonegroup.placement_targets) {
+      if (target.second.type == placement_type) {
+         placement_id = target.second.name;
+         is_exist = true;
+         break;
+       }
+    }
+    if (!is_exist) {
+      ldout(s->cct, 0) << "placement type (" << placement_type << ")"
+                       << " doesn't exist in the placement targets of zonegroup"
+                       << " (" << store->get_zonegroup().api_name << ")" << dendl;
+      op_ret = -ERR_INVALID_STORAGE_CLASS;
+      s->err.message = "The x-amz-storage-class " + placement_type +
+                       " does not exist";
+      return op_ret;
+    }
+
+    auto& zone_params = store->get_zone_params();
+    bool is_valid = (!placement_id.empty() &&
+      (zone_params.placement_pools[placement_id].index_pool ==
+       zone_params.placement_pools[s->bucket_info.placement_rule].index_pool) &&
+      (zone_params.placement_pools[placement_id].data_pool ==
+       zone_params.placement_pools[s->bucket_info.placement_rule].data_pool));
+    if (is_valid) {
+      s->placement_id = placement_id;
+    } else {
+      op_ret = -ERR_INVALID_STORAGE_CLASS;
+      s->err.message = "The x-amz-storage-class (" + placement_type +
+                       ") must use the same index_pool and data_pool" +
+                       " with bucket default placement (" +
+                       s->bucket_info.placement_rule + ")";
+      return op_ret;
+    }
+  }
+
 
   return 0;
 }
