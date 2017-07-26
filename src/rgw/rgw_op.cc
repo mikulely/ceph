@@ -3011,7 +3011,10 @@ int RGWPutObjProcessor_Multipart::do_complete(size_t accounted_size,
                                               map<string, bufferlist>& attrs,
                                               real_time delete_at,
                                               const char *if_match,
-                                              const char *if_nomatch, const string *user_data, rgw_zone_set *zones_trace)
+                                              const char *if_nomatch,
+                                              const string *user_data, 
+                                              const std::string *placement_type,
+                                              rgw_zone_set *zones_trace)
 {
   complete_writing_data();
 
@@ -3554,7 +3557,9 @@ void RGWPutObj::execute()
 
   op_ret = processor->complete(s->obj_size, etag, &mtime, real_time(), attrs,
                                (delete_at ? *delete_at : real_time()), if_match, if_nomatch,
-                               (user_data.empty() ? nullptr : &user_data));
+                               (user_data.empty() ? nullptr : &user_data),
+                               (placement_type.empty() ? nullptr : &placement_type)
+                               );
 
   /* produce torrent */
   if (s->cct->_conf->rgw_torrent_flag && (ofs == torrent.get_data_len()))

@@ -728,7 +728,7 @@ void RGWListBucket_ObjStore_S3::send_versioned_response()
       if (!iter->is_delete_marker()) {
 	s->formatter->dump_format("ETag", "\"%s\"", iter->meta.etag.c_str());
 	s->formatter->dump_int("Size", iter->meta.accounted_size);
-	s->formatter->dump_string("StorageClass", "STANDARD");
+	s->formatter->dump_string("StorageClass", iter->meta.placement_type.c_str());
       }
       dump_owner(s, iter->meta.owner, iter->meta.owner_display_name);
       s->formatter->close_section();
@@ -803,7 +803,7 @@ void RGWListBucket_ObjStore_S3::send_response()
       dump_time(s, "LastModified", &iter->meta.mtime);
       s->formatter->dump_format("ETag", "\"%s\"", iter->meta.etag.c_str());
       s->formatter->dump_int("Size", iter->meta.accounted_size);
-      s->formatter->dump_string("StorageClass", "STANDARD");
+      s->formatter->dump_string("StorageClass", iter->meta.placement_type.c_str());
       dump_owner(s, iter->meta.owner, iter->meta.owner_display_name);
       if (s->system_request) {
         s->formatter->dump_string("RgwxTag", iter->tag);
@@ -2704,7 +2704,7 @@ void RGWListMultipart_ObjStore_S3::send_response()
     s->formatter->dump_string("Bucket", s->bucket_name);
     s->formatter->dump_string("Key", s->object.name);
     s->formatter->dump_string("UploadId", upload_id);
-    s->formatter->dump_string("StorageClass", "STANDARD");
+    s->formatter->dump_string("StorageClass", "STANDARD"); // todo jiaying
     s->formatter->dump_int("PartNumberMarker", marker);
     s->formatter->dump_int("NextPartNumberMarker", cur_max);
     s->formatter->dump_int("MaxParts", max_parts);
@@ -2773,7 +2773,7 @@ void RGWListBucketMultiparts_ObjStore_S3::send_response()
       s->formatter->dump_string("UploadId", mp.get_upload_id());
       dump_owner(s, s->user->user_id, s->user->display_name, "Initiator");
       dump_owner(s, s->user->user_id, s->user->display_name);
-      s->formatter->dump_string("StorageClass", "STANDARD");
+      s->formatter->dump_string("StorageClass", iter->obj.meta.placement_type.c_str());
       dump_time(s, "Initiated", &iter->obj.meta.mtime);
       s->formatter->close_section();
     }
