@@ -844,7 +844,7 @@ struct RGWUploadPartInfo {
     ENCODE_FINISH(bl);
   }
   void decode(bufferlist::iterator& bl) {
-    DECODE_START_LEGACY_COMPAT_LEN(4, 2, 2, bl);
+    DECODE_START_LEGACY_COMPAT_LEN(5, 2, 2, bl);
     ::decode(num, bl);
     ::decode(size, bl);
     ::decode(etag, bl);
@@ -2808,11 +2808,13 @@ public:
         ceph::real_time delete_at;
         bool canceled;
         const string *user_data;
+        const std::string *placement_type;
         rgw_zone_set *zones_trace;
 
         MetaParams() : mtime(NULL), rmattrs(NULL), data(NULL), manifest(NULL), ptag(NULL),
                  remove_objs(NULL), category(RGW_OBJ_CATEGORY_MAIN), flags(0),
-                 if_match(NULL), if_nomatch(NULL), olh_epoch(0), canceled(false), user_data(nullptr), zones_trace(nullptr) {}
+                 if_match(NULL), if_nomatch(NULL), olh_epoch(0), canceled(false), user_data(nullptr), 
+                 placement_type(nullptr), zones_trace(nullptr) {}
       } meta;
 
       explicit Write(RGWRados::Object *_target) : target(_target) {}
@@ -2967,7 +2969,9 @@ public:
                    uint64_t accounted_size, ceph::real_time& ut,
                    const string& etag, const string& content_type,
                    bufferlist *acl_bl, RGWObjCategory category,
-		   list<rgw_obj_index_key> *remove_objs, const string *user_data = nullptr);
+                   list<rgw_obj_index_key> *remove_objs,
+                   const string *user_data = nullptr,
+                   const std::string *placement_type = nullptr);
       int complete_del(int64_t poolid, uint64_t epoch,
                        ceph::real_time& removed_mtime, /* mtime of removed object */
                        list<rgw_obj_index_key> *remove_objs);
@@ -3778,7 +3782,9 @@ protected:
   virtual int do_complete(size_t accounted_size, const string& etag,
                           ceph::real_time *mtime, ceph::real_time set_mtime,
                           map<string, bufferlist>& attrs, ceph::real_time delete_at,
-                          const char *if_match, const char *if_nomatch, const string *user_data,
+                          const char *if_match, const char *if_nomatch, 
+                          const string *user_data,
+                          const string *placement_type,
                           rgw_zone_set* zones_trace = nullptr) = 0;
 
 public:
@@ -3797,6 +3803,7 @@ public:
                ceph::real_time *mtime, ceph::real_time set_mtime,
                map<string, bufferlist>& attrs, ceph::real_time delete_at,
                const char *if_match = NULL, const char *if_nomatch = NULL, const string *user_data = nullptr,
+	       const string *placement_type = nullptr,
                rgw_zone_set *zones_trace = nullptr);
 
   CephContext *ctx();
@@ -3876,7 +3883,10 @@ protected:
   int do_complete(size_t accounted_size, const string& etag,
                   ceph::real_time *mtime, ceph::real_time set_mtime,
                   map<string, bufferlist>& attrs, ceph::real_time delete_at,
-                  const char *if_match, const char *if_nomatch, const string *user_data, rgw_zone_set *zones_trace) override;
+                  const char *if_match, const char *if_nomatch,
+                  const string *user_data,
+                  const string *placement_typer,
+		  rgw_zone_set *zones_trace) override;
 
   int prepare_next_part(off_t ofs);
   int complete_parts();
@@ -3995,6 +4005,7 @@ protected:
                   ceph::real_time *mtime, ceph::real_time set_mtime,
                   map<string, bufferlist>& attrs, ceph::real_time delete_at,
                   const char *if_match, const char *if_nomatch, const string *user_data,
+                  const string *placement_type,
                   rgw_zone_set *zones_trace) override;
 public:
   bool immutable_head() { return true; }

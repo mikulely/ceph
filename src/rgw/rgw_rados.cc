@@ -2404,9 +2404,11 @@ int RGWPutObjProcessor::complete(size_t accounted_size, const string& etag,
                                  real_time *mtime, real_time set_mtime,
                                  map<string, bufferlist>& attrs, real_time delete_at,
                                  const char *if_match, const char *if_nomatch, const string *user_data,
+                                 const string *placement_type,
                                  rgw_zone_set *zones_trace)
 {
-  int r = do_complete(accounted_size, etag, mtime, set_mtime, attrs, delete_at, if_match, if_nomatch, user_data, zones_trace);
+  int r = do_complete(accounted_size, etag, mtime, set_mtime, attrs, delete_at, 
+                      if_match, if_nomatch, user_data, placement_type, zones_trace);
   if (r < 0)
     return r;
 
@@ -2753,7 +2755,9 @@ int RGWPutObjProcessor_Atomic::do_complete(size_t accounted_size, const string& 
                                            map<string, bufferlist>& attrs,
                                            real_time delete_at,
                                            const char *if_match,
-                                           const char *if_nomatch, const string *user_data,
+                                           const char *if_nomatch,
+                                           const string *user_data,
+                                           const string *placement_type,
                                            rgw_zone_set *zones_trace) {
   int r = complete_writing_data();
   if (r < 0)
@@ -2781,6 +2785,7 @@ int RGWPutObjProcessor_Atomic::do_complete(size_t accounted_size, const string& 
   obj_op.meta.delete_at = delete_at;
   obj_op.meta.user_data = user_data;
   obj_op.meta.zones_trace = zones_trace;
+  obj_op.meta.placement_type = placement_type;
 
   r = obj_op.write_meta(obj_len, accounted_size, attrs);
   if (r < 0) {
@@ -6979,7 +6984,8 @@ int RGWRados::Object::Write::_do_write_meta(uint64_t size, uint64_t accounted_si
 
   r = index_op->complete(poolid, epoch, size, accounted_size,
                         meta.set_mtime, etag, content_type, &acl_bl,
-                        meta.category, meta.remove_objs, meta.user_data);
+                        meta.category, meta.remove_objs, meta.user_data,
+                        meta.placement_type);
   if (r < 0)
     goto done_cancel;
 
@@ -7369,7 +7375,8 @@ public:
 
   int complete(const string& etag, real_time *mtime, real_time set_mtime,
                map<string, bufferlist>& attrs, real_time delete_at, rgw_zone_set *zones_trace) {
-    return processor->complete(data_len, etag, mtime, set_mtime, attrs, delete_at, NULL, NULL, NULL, zones_trace);
+    return processor->complete(data_len, etag, mtime, set_mtime, attrs,
+                               delete_at, NULL, NULL, NULL, NULL, zones_trace);
   }
 
   bool is_canceled() {
@@ -10001,7 +10008,9 @@ int RGWRados::Bucket::UpdateIndex::complete(int64_t poolid, uint64_t epoch,
                                             const string& content_type,
                                             bufferlist *acl_bl,
                                             RGWObjCategory category,
-                                            list<rgw_obj_index_key> *remove_objs, const string *user_data)
+                                            list<rgw_obj_index_key> *remove_objs,
+                                            const string *user_data,
+                                            const std::string *placement_type)
 {
   if (blind) {
     return 0;
@@ -10023,6 +10032,8 @@ int RGWRados::Bucket::UpdateIndex::complete(int64_t poolid, uint64_t epoch,
   ent.meta.etag = etag;
   if (user_data)
     ent.meta.user_data = *user_data;
+  if (placement_type)
+    ent.meta.placement_type = *placement_type;
 
   ACLOwner owner;
   if (acl_bl && acl_bl->length()) {
