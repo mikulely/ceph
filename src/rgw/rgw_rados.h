@@ -3862,6 +3862,7 @@ class RGWPutObjProcessor_Atomic : public RGWPutObjProcessor_Aio
   string version_id;
 
 protected:
+  std::string placement_id;
   rgw_bucket bucket;
   string obj_str;
 
@@ -3886,7 +3887,9 @@ protected:
 public:
   ~RGWPutObjProcessor_Atomic() override {}
   RGWPutObjProcessor_Atomic(RGWObjectCtx& obj_ctx, RGWBucketInfo& bucket_info,
-                            rgw_bucket& _b, const string& _o, uint64_t _p, const string& _t, bool versioned) :
+                            rgw_bucket& _b, const string& _o, uint64_t _p,
+                            const string& _t, bool versioned,
+                            const std::string& _placement_id) :
                                 RGWPutObjProcessor_Aio(obj_ctx, bucket_info),
                                 part_size(_p),
                                 cur_part_ofs(0),
@@ -3896,6 +3899,7 @@ public:
                                 max_chunk_size(0),
                                 versioned_object(versioned),
                                 olh_epoch(0),
+                                placement_id(_placement_id),
                                 bucket(_b),
                                 obj_str(_o),
                                 unique_tag(_t) {}
@@ -3994,8 +3998,10 @@ protected:
                   rgw_zone_set *zones_trace) override;
 public:
   bool immutable_head() { return true; }
-  RGWPutObjProcessor_Multipart(RGWObjectCtx& obj_ctx, RGWBucketInfo& bucket_info, uint64_t _p, req_state *_s) :
-                   RGWPutObjProcessor_Atomic(obj_ctx, bucket_info, _s->bucket, _s->object.name, _p, _s->req_id, false), s(_s) {}
+  RGWPutObjProcessor_Multipart(RGWObjectCtx& obj_ctx, RGWBucketInfo& bucket_info, uint64_t _p, 
+                               req_state *_s, const std::string& _placement_id) :
+                   RGWPutObjProcessor_Atomic(obj_ctx, bucket_info, _s->bucket, _s->object.name, 
+                                             _p, _s->req_id, false, _placement_id), s(_s) {}
   void get_mp(RGWMPObj** _mp);
 }; /* RGWPutObjProcessor_Multipart */
 #endif

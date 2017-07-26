@@ -1786,6 +1786,8 @@ struct req_state {
 
   RGWUserInfo *user;
 
+  std::string placement_id;
+
   struct {
     /* TODO(rzarzynski): switch out to the static_ptr for both members. */
 
