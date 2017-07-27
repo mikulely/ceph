@@ -8066,8 +8066,20 @@ int RGWRados::copy_obj(RGWObjectCtx& obj_ctx,
     return -EIO;
   }
 
+  assert(src_pool == dest_pool);
 
-  bool copy_data = !astate->has_manifest || (src_pool != dest_pool);
+  rgw_pool src_tail_pool;
+  rgw_pool dest_tail_pool;
+  if (!get_obj_data_pool(src_bucket_info.placement_rule, src_obj, &src_tail_pool, true)) {
+    ldout(cct, 0) << "ERROR: failed to locate tail data pool for " << src_obj << dendl;
+    return -EIO;
+  }
+  if (!get_obj_data_pool(dest_bucket_info.placement_rule, dest_obj, &dest_tail_pool, true)) {
+    ldout(cct, 0) << "ERROR: failed to locate tail data pool for " << dest_obj << dendl;
+    return -EIO;
+  }
+
+  bool copy_data = !astate->has_manifest || (src_tail_pool != dest_tail_pool);
   bool copy_first = false;
   if (astate->has_manifest) {
     if (!astate->manifest.has_tail()) {
