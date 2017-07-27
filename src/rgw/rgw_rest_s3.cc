@@ -307,6 +307,14 @@ int RGWGetObj_ObjStore_S3::send_response_data(bufferlist& bl, off_t bl_ofs,
           ldout(s->cct,0) << "Error caught buffer::error couldn't decode TagSet " << dendl;
         }
         dump_header(s, RGW_AMZ_TAG_COUNT, obj_tags.count());
+      } else if (iter->first.compare(RGW_ATTR_PLACEMENT_TYPE) == 0) {
+        std::string placement_type;
+        try{
+          ::decode(placement_type, iter->second);
+        } catch (buffer::error &err) {
+          ldout(s->cct,0) << "Error caught buffer::error couldn't decode placement type" << dendl;
+        }
+        dump_header(s, "x-amz-storage-class", placement_type);
       }
     }
   }

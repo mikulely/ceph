@@ -3324,6 +3324,13 @@ void RGWPutObj::execute()
     supplied_md5[sizeof(supplied_md5) - 1] = '\0';
   }
 
+  /* Store the placement type */
+  if (!placement_type.empty()) {
+    bufferlist tmp;
+    ::encode(placement_type, tmp);
+    emplace_attr(RGW_ATTR_PLACEMENT_TYPE, std::move(tmp));
+  }
+
   processor = select_processor(*static_cast<RGWObjectCtx *>(s->obj_ctx), &multipart);
 
   // no filters by default
@@ -3771,6 +3778,12 @@ void RGWPostObj::execute()
     etag = calc_md5;
     bl.append(etag.c_str(), etag.size() + 1);
     emplace_attr(RGW_ATTR_ETAG, std::move(bl));
+
+    if (!placement_type.empty()) {
+      bufferlist tmp;
+      ::encode(placement_type, tmp);
+      emplace_attr(RGW_ATTR_PLACEMENT_TYPE, std::move(tmp));
+    }
 
     policy.encode(aclbl);
     emplace_attr(RGW_ATTR_ACL, std::move(aclbl));
