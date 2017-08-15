@@ -252,6 +252,7 @@ int RGWZoneGroup::create_default(bool old_format)
 
   RGWZoneGroupPlacementTarget placement_target;
   placement_target.name = "default-placement";
+  placement_target.type = "STANDARD";
   placement_targets[placement_target.name] = placement_target;
   default_placement = "default-placement";
 

@@ -250,6 +250,7 @@ void usage()
   cout << "   --default                 set entity (realm, zonegroup, zone) as default\n";
   cout << "   --read-only               set zone as read-only (when adding to zonegroup)\n";
   cout << "   --placement-id            placement id for zonegroup placement commands\n";
+  cout << "   --placement-type          placement type for zonegroup placement commands\n";
   cout << "   --tags=<list>             list of tags for zonegroup placement add and modify commands\n";
   cout << "   --tags-add=<list>         list of tags to add for zonegroup placement modify command\n";
   cout << "   --tags-rm=<list>          list of tags to remove for zonegroup placement modify command\n";
@@ -2413,6 +2414,7 @@ int main(int argc, const char **argv)
   string quota_scope;
   string object_version;
   string placement_id;
+  string placement_type;
   list<string> tags;
   list<string> tags_add;
   list<string> tags_rm;
@@ -2729,6 +2731,8 @@ int main(int argc, const char **argv)
       zonegroup_new_name = val;
     } else if (ceph_argparse_witharg(args, i, &val, "--placement-id", (char*)NULL)) {
       placement_id = val;
+    } else if (ceph_argparse_witharg(args, i, &val, "--placement-type", (char*)NULL)) {
+      placement_type = val;
     } else if (ceph_argparse_witharg(args, i, &val, "--tags", (char*)NULL)) {
       get_str_list(val, tags);
     } else if (ceph_argparse_witharg(args, i, &val, "--tags-add", (char*)NULL)) {
@@ -3818,8 +3822,14 @@ int main(int argc, const char **argv)
 	}
 
         if (opt_cmd == OPT_ZONEGROUP_PLACEMENT_ADD) {
+          if (placement_type.empty()) {
+            cerr << "ERROR: --placement-type not specified" << std::endl;
+            return EINVAL;
+          }
+
           RGWZoneGroupPlacementTarget target;
           target.name = placement_id;
+          target.type = placement_type;
           for (auto& t : tags) {
             target.tags.insert(t);
           }
@@ -3833,6 +3843,8 @@ int main(int argc, const char **argv)
             }
           }
           target.name = placement_id;
+	  if (!placement_type.empty())
+            target.type = placement_type;
           for (auto& t : tags_rm) {
             target.tags.erase(t);
           }

@@ -994,12 +994,14 @@ void RGWZoneGroupPlacementTarget::dump(Formatter *f) const
 {
   encode_json("name", name, f);
   encode_json("tags", tags, f);
+  encode_json("type", type, f);
 }
 
 void RGWZoneGroupPlacementTarget::decode_json(JSONObj *obj)
 {
   JSONDecoder::decode_json("name", name, obj);
   JSONDecoder::decode_json("tags", tags, obj);
+  JSONDecoder::decode_json("type", type, obj);
 }
 
 void RGWZoneGroup::dump(Formatter *f) const
