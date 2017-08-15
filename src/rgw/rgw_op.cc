@@ -3082,20 +3082,14 @@ RGWPutObjProcessor *RGWPutObj::select_processor(RGWObjectCtx& obj_ctx, bool *is_
 {
   RGWPutObjProcessor *processor;
 
-  bool multipart = s->info.args.exists("uploadId");
-
   uint64_t part_size = s->cct->_conf->rgw_obj_stripe_size;
 
-  if (!multipart) {
+  if (!(*is_multipart)) {
     processor = new RGWPutObjProcessor_Atomic(obj_ctx, s->bucket_info, s->bucket, s->object.name, part_size, s->req_id, s->bucket_info.versioning_enabled());
     (static_cast<RGWPutObjProcessor_Atomic *>(processor))->set_olh_epoch(olh_epoch);
     (static_cast<RGWPutObjProcessor_Atomic *>(processor))->set_version_id(version_id);
   } else {
     processor = new RGWPutObjProcessor_Multipart(obj_ctx, s->bucket_info, part_size, s);
-  }
-
-  if (is_multipart) {
-    *is_multipart = multipart;
   }
 
   return processor;
@@ -3240,7 +3234,7 @@ void RGWPutObj::execute()
   bufferlist bl, aclbl, bs;
   int len;
   map<string, string>::iterator iter;
-  bool multipart;
+  bool multipart = s->info.args.exists("uploadId");
   
   off_t fst;
   off_t lst;
