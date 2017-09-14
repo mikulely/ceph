@@ -275,6 +275,7 @@ void RGWOp_Metadata_Unlock::execute() {
 }
 
 RGWOp *RGWHandler_Metadata::op_get() {
+  s->resource = RGW_RESOURCE_CATEGORY_METADATA;
   if (s->info.args.exists("key"))
     return new RGWOp_Metadata_Get;
   else
@@ -282,14 +283,17 @@ RGWOp *RGWHandler_Metadata::op_get() {
 }
 
 RGWOp *RGWHandler_Metadata::op_put() {
+  s->resource = RGW_RESOURCE_CATEGORY_METADATA;
   return new RGWOp_Metadata_Put;
 }
 
 RGWOp *RGWHandler_Metadata::op_delete() {
+  s->resource = RGW_RESOURCE_CATEGORY_METADATA;
   return new RGWOp_Metadata_Delete;
 }
 
 RGWOp *RGWHandler_Metadata::op_post() {
+  s->resource = RGW_RESOURCE_CATEGORY_METADATA;
   if (s->info.args.exists("lock"))
     return new RGWOp_Metadata_Lock;
   else if (s->info.args.exists("unlock"))
