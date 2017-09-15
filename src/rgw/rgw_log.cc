@@ -356,7 +356,7 @@ int rgw_log_op(RGWRados *store, RGWREST* const rest, struct req_state *s,
   set_param_str(s, "HTTP_USER_AGENT", entry.user_agent);
   set_param_str(s, "HTTP_REFERRER", entry.referrer);
   set_param_str(s, "REQUEST_URI", entry.uri);
-  set_param_str(s, "REQUEST_METHOD", entry.op);
+  entry.op = op_name;
 
   entry.http_method = s->op; // track parsed http method
 
