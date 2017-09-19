@@ -47,7 +47,6 @@
 #include "rgw_rest_config.h"
 #include "rgw_rest_realm.h"
 #include "rgw_swift_auth.h"
-#include "rgw_log.h"
 #include "rgw_tools.h"
 #include "rgw_resolve.h"
 
@@ -353,7 +352,6 @@ int main(int argc, const char **argv)
 
   rgw_user_init(store);
   rgw_bucket_init(store->meta_mgr);
-  rgw_log_usage_init(g_ceph_context, store);
 
   RGWREST rest;
 
@@ -587,8 +585,6 @@ int main(int argc, const char **argv)
   unregister_async_signal_handler(SIGINT, handle_sigterm);
   unregister_async_signal_handler(SIGUSR1, handle_sigterm);
   shutdown_async_signal_handler();
-
-  rgw_log_usage_finalize();
 
   delete olog;
 

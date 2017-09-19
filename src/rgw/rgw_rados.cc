@@ -63,7 +63,6 @@ using namespace librados;
 #include "auth/Crypto.h" // get_random_bytes()
 
 #include "rgw_log.h"
-
 #include "rgw_gc.h"
 #include "rgw_lc.h"
 
@@ -4416,6 +4415,8 @@ int RGWRados::init_complete()
       ldout(cct, 20) << "NOTICE: not syncing to/from zone " << z.name << " id " << z.id << dendl;
     }
   }
+
+  rgw_log_usage_init(cct, this);
 
   ret = open_root_pool_ctx();
   if (ret < 0)
@@ -13745,6 +13746,8 @@ RGWRados *RGWStoreManager::init_raw_storage_provider(CephContext *cct)
 
 void RGWStoreManager::close_storage(RGWRados *store)
 {
+  rgw_log_usage_finalize();
+
   if (!store)
     return;
 

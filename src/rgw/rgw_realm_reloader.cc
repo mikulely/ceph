@@ -5,7 +5,6 @@
 #include "rgw_rados.h"
 
 #include "rgw_bucket.h"
-#include "rgw_log.h"
 #include "rgw_rest.h"
 #include "rgw_user.h"
 
@@ -82,9 +81,6 @@ void RGWRealmReloader::reload()
   frontends->pause();
 
   ldout(cct, 1) << "Frontends paused" << dendl;
-
-  // TODO: make RGWRados responsible for rgw_log_usage lifetime
-  rgw_log_usage_finalize();
 
   // destroy the existing store
   RGWStoreManager::close_storage(store);
@@ -163,8 +159,6 @@ void RGWRealmReloader::reload()
   rgw_user_init(store);
   ldout(cct, 1) << " - user subsystem init" << dendl;
   rgw_bucket_init(store->meta_mgr);
-  ldout(cct, 1) << " - usage subsystem init" << dendl;
-  rgw_log_usage_init(cct, store);
 
   ldout(cct, 1) << "Resuming frontends with new realm configuration." << dendl;
 

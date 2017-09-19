@@ -523,7 +523,6 @@ namespace rgw {
 
     rgw_user_init(store);
     rgw_bucket_init(store->meta_mgr);
-    rgw_log_usage_init(g_ceph_context, store);
 
     // XXX ex-RGWRESTMgr_lib, mgr->set_logging(true)
 
@@ -572,8 +571,6 @@ namespace rgw {
     delete fe;
     delete fec;
     delete ldh;
-
-    rgw_log_usage_finalize();
 
     delete olog;
 
