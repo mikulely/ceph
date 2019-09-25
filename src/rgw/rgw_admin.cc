@@ -443,6 +443,7 @@ enum {
   OPT_OBJECT_UNLINK,
   OPT_OBJECT_STAT,
   OPT_OBJECT_REWRITE,
+  OPT_OBJECT_TRANSIT,
   OPT_OBJECTS_EXPIRE,
   OPT_OBJECTS_EXPIRE_STALE_LIST,
   OPT_OBJECTS_EXPIRE_STALE_RM,
@@ -769,6 +770,8 @@ static int get_cmd(const char *cmd, const char *prev_cmd, const char *prev_prev_
       return OPT_OBJECT_STAT;
     if (strcmp(cmd, "rewrite") == 0)
       return OPT_OBJECT_REWRITE;
+    if (strcmp(cmd, "transit") == 0)
+      return OPT_OBJECT_TRANSIT;
   } else if (strcmp(prev_cmd, "objects") == 0) {
     if (strcmp(cmd, "expire") == 0)
       return OPT_OBJECTS_EXPIRE;
@@ -6138,6 +6141,95 @@ next:
     } else {
       ldout(store->ctx(), 20) << "skipped object" << dendl;
     }
+  }
+
+  if (opt_cmd == OPT_OBJECT_TRANSIT) {
+    if (bucket_name.empty()) {
+      cerr << "ERROR: --bucket not specified" << std::endl;
+      return EINVAL;
+    }
+    if (object.empty()) {
+      cerr << "ERROR: --object not specified" << std::endl;
+      return EINVAL;
+    }
+
+    if (placement_id.empty()) {
+      cerr << "ERROR: --placement-id not specified" << std::endl;
+      return EINVAL;
+    } 
+
+    rgw_placement_rule rule;
+    rule.from_str(placement_id);
+
+    if (!store->svc()->zone->get_zone_params().valid_placement(rule)) {
+      cerr << "placement id (" << placement_id << ")"
+           << " doesn't exist in the placement targets of zonegroup"
+           << " (" << store->svc()->zone->get_zonegroup().api_name << ")"
+           << std::endl;
+      return EINVAL;
+    } 
+
+    if (storage_class.empty()) {
+      cerr << "ERROR: --storage-class not specified" << std::endl;
+      return EINVAL;
+    }
+
+
+    if (!rule.storage_class.empty() &&
+        rule.storage_class != storage_class) {
+      cerr << "ERROR: provided contradicting storage class configuration,"
+           << "rule.storage_class: " << rule.storage_class << " "
+           << "storage_class: " << storage_class << std::endl;
+      return EINVAL;
+    } else if (rule.storage_class.empty()) {
+      rule.storage_class = storage_class;
+    }
+    
+    bool need_transit = true;
+
+    RGWBucketInfo bucket_info;
+    int ret = init_bucket(tenant, bucket_name, bucket_id, bucket_info, bucket);
+    if (ret < 0) {
+      cerr << "ERROR: could not init bucket: " << cpp_strerror(-ret) << std::endl;
+      return -ret;
+    }
+
+    rgw_obj obj(bucket, object);
+    obj.key.set_instance(object_version);
+
+    map<string, bufferlist> attrs;
+    real_time mtime;
+    RGWObjectCtx obj_ctx(store);
+    RGWRados::Object op_target(store->getRados(), bucket_info, obj_ctx, obj);
+    RGWRados::Object::Read read_op(&op_target);
+
+    read_op.params.attrs = &attrs;
+    read_op.params.lastmod = &mtime;
+
+    ret = read_op.prepare(null_yield);
+    if (ret < 0) {
+      cerr << "ERROR: failed to stat object, returned error: " << cpp_strerror(-ret) << std::endl;
+      return 1;
+    }
+
+    auto iter = attrs.find(RGW_ATTR_STORAGE_CLASS);
+    if (iter != attrs.end()) {
+      if (rule.storage_class == iter->second.to_str()) {
+        need_transit = false; 
+      }
+    }
+
+    if (need_transit) {
+      ret = store->getRados()->transition_obj(obj_ctx, bucket_info, obj,
+                                              rule, mtime, 0, dpp(), null_yield);
+      if (ret < 0) {
+        cerr << "ERROR: object transit returned: " << cpp_strerror(-ret) << std::endl;
+        return -ret;
+      }
+    } else {
+      ldout(store->ctx(), 20) << "skipped object" << dendl;
+    }
+
   }
 
   if (opt_cmd == OPT_OBJECTS_EXPIRE) {
