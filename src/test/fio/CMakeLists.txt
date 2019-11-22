@@ -22,6 +22,8 @@ set_target_properties(fio_ceph_messenger PROPERTIES
   COMPILE_FLAGS "${FIO_CFLAGS}")
 
 if(WITH_FIO)
+  add_dependencies(fio_ceph_objectstore librbd)
+  add_dependencies(fio_ceph_messenger librbd)
   add_dependencies(fio_ceph_objectstore fio_ext)
   add_dependencies(fio_ceph_messenger fio_ext)
 endif()
